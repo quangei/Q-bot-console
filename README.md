@@ -26,8 +26,8 @@ Minecraft bot with chat and some command
 - .sneak: Bật chế độ lén bước.
 - .unsneak: Tắt chế độ lén bước.
 - .jump: Nhảy lên.
-
- 
+- .afk: Bắt đầu anti-afk
+- .stopafk: Tắt anti-afk
   
   
 This bot is code by Vietnamese people.
