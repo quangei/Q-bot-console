@@ -26,5 +26,7 @@ Minecraft bot with chat and some command
 - .unsneak: Tắt chế độ lén bước.
 - .jump: Nhảy lên.
 
+ 
   
-  This bot is code by Vietnamese people.
+  
+This bot is code by Vietnamese people.
