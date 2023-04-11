@@ -6,6 +6,7 @@ Minecraft bot with chat and some command
 - Install gitbash https://git-scm.com/downloads (to use git clone)
 - Open cmd and goto file you want to save my bot with `cd`
 - Use `git clone https://github.com/quangei/Q-bot-console.git`
+- Use `cd q-bot-console`
 - Use `npm install`
 - Use `node bot.js`
 
