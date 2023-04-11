@@ -62,6 +62,8 @@ function bcmd(username, message) {
         console.log('\x1b[36m.sneak\x1b[0m: Bật chế độ lén bước.');
         console.log('\x1b[36m.unsneak\x1b[0m: Tắt chế độ lén bước.');
         console.log('\x1b[36m.jump\x1b[0m: Nhảy lên.');
+        console.log('\x1b[36m.afk\x1b[0m: Bắt đầu anti-afk.');
+        console.log('\x1b[36m.stopafk\x1b[0m: Tắt anti-afk.');
         break;
       
       case '.chat':
