@@ -1,6 +1,6 @@
 @echo off
 rem Q Bot Console by quangei
-rem https://github.com/qsef1256/DiaBot/
+rem https://github.com/quangei/Q-bot-console
 setlocal
 
 node -v 2> Nul
@@ -8,7 +8,7 @@ if not "%ERRORLEVEL%" == "0" goto errNode
 
 cd %~dp0
 set ver= 1.0.0
-set link= https://github.com/qsef1256/DiaBot/
+set link= https://github.com/quangei/Q-bot-console
 title Q-bot-console Installer %ver%
 echo.
 echo Q-bot-console Installer by quangei

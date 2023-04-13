@@ -1,13 +1,20 @@
 const mineflayer = require('mineflayer')
-const rlsync = require('readline-sync')
+const inventoryViewer = require('mineflayer-web-inventory')
+const { pathfinder, Movements, goals: { GoalNear, GoalFollow, GoalBlock } } = require('mineflayer-pathfinder')
+const pvp = require('mineflayer-pvp').plugin
+var tpsPlugin = require('mineflayer-tps')(mineflayer)
+const armorManager = require('mineflayer-armor-manager')
 
-let bname = rlsync.question('Bot name: ')
-let bip = rlsync.question('Server: ')
-let bver = rlsync.question('Version: ')
+const rlsync = require('readline-sync')
+let bname = 'Bot'
+let bip = 'bottestdb.aternos.me:55571'
+let bver = '1.18.2'
 let ip = bip.split(':');
 
-const { pathfinder, Movements, goals: { GoalNear, GoalFollow } } = require('mineflayer-pathfinder');
+const opn = require('opn');
+
 const readline = require('readline')
+const { win32 } = require('path')
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -33,12 +40,21 @@ bot.on('spawn', () => {
 })
 
 bot.loadPlugin(pathfinder)
+bot.loadPlugin(pvp)
+bot.loadPlugin(tpsPlugin)
+bot.loadPlugin(armorManager)
 
-function bcmd(username, message) {
+bot.armorManager.equipAll()
 
-  const owner = 'YourUsername'
-  
-  if (!(username == owner || username == 'console')) return
+let invoptions = {
+  port: 4000,
+}
+inventoryViewer(bot, invoptions)
+
+console.log(options)
+
+function bcmd(username, message) {  
+  if (!(username == 'console')) return
   if (username === bot.username) return
   
   let arg = message.split(' ')
@@ -48,10 +64,12 @@ function bcmd(username, message) {
     switch(cmd) {
       case '.help':
         console.log('\x1b[93mDanh sách các lệnh của Bot:\x1b[0m');
-        console.log('\x1b[36m.chat | .send | .say <message>\x1b[0m: Gửi tin nhắn chat đến máy chủ.');
-        console.log('\x1b[36m.coord | .coordinates\x1b[0m: Hiển thị tọa độ hiện tại của bạn.');
+        console.log('\x1b[36m.chat | .send | .say <message>\x1b[0m: Gửi tin nhắn đến máy chủ.');
+        console.log('\x1b[36m.cmd | .command <command>\x1b[0m: Gửi lệnh đến máy chủ mà không cần /.');
+        console.log('\x1b[36m.coord | .coordinates\x1b[0m: Hiển thị tọa độ hiện tại của bot.');
         console.log('\x1b[36m.clear\x1b[0m: Xóa màn hình console.');
-        console.log('\x1b[36m.inv | .inventory | .item | .items\x1b[0m: Hiển thị danh sách đồ trong túi đồ của bạn.');
+        console.log('\x1b[36m.inv | .inventory | .item | .items\x1b[0m: Hiển thị danh sách đồ trong túi đồ của bot.');
+        console.log('\x1b[36m.webinv | .showinv\x1b[0m: Hiển thị kho đồ trong túi đồ của bot trên web.')
         console.log('\x1b[36m.server\x1b[0m: Hiển thị thông tin về máy chủ.');
         console.log('\x1b[36m.player | .players\x1b[0m: Liệt kê tất cả người chơi đang online.');
         console.log('\x1b[36m.playerinfo <player>\x1b[0m: Hiển thị thông tin chi tiết về một người chơi cụ thể.');
@@ -62,8 +80,6 @@ function bcmd(username, message) {
         console.log('\x1b[36m.sneak\x1b[0m: Bật chế độ lén bước.');
         console.log('\x1b[36m.unsneak\x1b[0m: Tắt chế độ lén bước.');
         console.log('\x1b[36m.jump\x1b[0m: Nhảy lên.');
-        console.log('\x1b[36m.afk\x1b[0m: Bắt đầu anti-afk.');
-        console.log('\x1b[36m.stopafk\x1b[0m: Tắt anti-afk.');
         break;
       
       case '.chat':
@@ -73,6 +89,14 @@ function bcmd(username, message) {
           console.log('[CHAT] Chat must be need arguments')
         }
         bot.chat(message.substring(5))
+        break;
+      
+      case '.cmd':
+      case '.command':
+        if (!arg[1]) {
+          console.log('[CMD] Chat must be need arguments')
+        }
+        bot.chat('/'+message.substring(5))
         break;
     
       case '.coord':
@@ -95,7 +119,13 @@ function bcmd(username, message) {
         break;
     
       case '.server':
-        console.log(`[IP] ${options.host}:${options.port}\n[Ver] ${options.version}`)
+        console.log(`[IP] ${options.host}:${options.port}`)
+        console.log(`[Ver] ${options.version}`)
+        console.log(`[TPS] ${bot.getTps()}`)
+        break;
+
+      case '.tps':
+        console.log('Server tps: ' + bot.getTps())
         break;
     
       case '.player':
@@ -164,6 +194,28 @@ function bcmd(username, message) {
         clearTimeout(afkTimer);
         break;
       
+      case '.webinv':
+      case '.showinv':
+        console.log("Open web inventory in http://localhost:"+ invoptions.port)
+        opn("http://localhost:"+ invoptions.port)
+        break;
+
+      case '.guard':
+        if (arg.length === 4) {
+          const x = parseFloat(arg[1])
+          const y = parseFloat(arg[2])
+          const z = parseFloat(arg[3])
+      
+          console.log(`Guarding (${x}, ${y}, ${z})...`)
+          guardArea(x, y, z)
+        } else {
+          console.log('Usage: .guard <x> <y> <z>')
+          }
+        break;
+      case '.stopguard':
+        console.log('Stop guarding...')
+        stopGuarding
+
       default:
         console.log(`Unknown command: "${cmd}". Type ".help" for a list of commands.`);
     }
@@ -180,7 +232,7 @@ function bcmd(username, message) {
     const x = parseFloat(args[1]);
     const y = parseFloat(args[2]);
     const z = parseFloat(args[3]);
-  
+    movements.scafoldingBlocks = ['stone', 'cobblestone', 'dirt']
     if (isNaN(x) || isNaN(y) || isNaN(z)) {
       const targetPlayer = bot.players[args[1]];
   
@@ -258,6 +310,27 @@ function bcmd(username, message) {
       
       startAFK();
     }, 5000);
+  }
+
+  function guardArea (pos) {
+    guardPos = pos
+  
+    // We we are not currently in combat, move to the guard pos
+    if (!bot.pvp.target) {
+      moveToGuardPos()
+    }
+  }
+  
+  // Cancel all pathfinder and combat
+  function stopGuarding () {
+    guardPos = null
+    bot.pvp.stop()
+    bot.pathfinder.setGoal(null)
+  }
+
+  function moveToGuardPos () {
+    bot.pathfinder.setMovements(new Movements(bot))
+    bot.pathfinder.setGoal(new GoalBlock(guardPos.x, guardPos.y, guardPos.z))
   }
 }
 
