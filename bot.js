@@ -7,9 +7,9 @@ const armorManager = require('mineflayer-armor-manager')
 const collectBlock = require('mineflayer-collectblock').plugin
 
 const rlsync = require('readline-sync')
-let bname = 'Bot'
-let bip = 'bottestdb.aternos.me:55571'
-let bver = '1.18.2'
+let bname = rlsync.question('Bot name: ')
+let bip = rlsync.question('Server ip: ')
+let bver = rlsync.question('Version: ')= '1.18.2'
 let ip = bip.split(':');
 
 const opn = require('opn');
