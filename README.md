@@ -38,6 +38,7 @@ Minecraft bot with chat and some command
  - .stopguard: Dừng chế độ bảo vệ khu vực.
  - .mine: Đào block.
  - .meslog: Lọc tin nhắn và chat.
-  
+
+This project still not finish
   
 This bot is code by Vietnamese people.
