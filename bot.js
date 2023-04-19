@@ -7,9 +7,9 @@ const armorManager = require('mineflayer-armor-manager')
 const collectBlock = require('mineflayer-collectblock').plugin
 
 const rlsync = require('readline-sync')
-let bname = rlsync.question('Bot name: ')
-let bip = rlsync.question('Server ip: ')
-let bver = rlsync.question('Version: ')= '1.18.2'
+let bname = 'Bot'
+let bip = 'bottestdb.aternos.me:55571'
+let bver = '1.18.2'
 let ip = bip.split(':');
 
 const opn = require('opn');
@@ -17,6 +17,7 @@ const path = require('path');
 
 const readline = require('readline')
 const { once } = require('events')
+const { SocketAddress } = require('net')
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -34,9 +35,13 @@ const bot = mineflayer.createBot(options)
 console.log(options)
 
 bot.on('login', () => {
-  console.log(`\x1b[38;2;252;246;50m${options.username} have joined ${options.host}:${options.port}\x1b[0m`)
-  console.log(`Use \x1b[38;2;71;242;48m.help\x1b[0m to see all command`)
-  console.log(`Use \x1b[38;2;71;242;48m.meslog\x1b[0m \x1b[38;2;122;135;120mmes /chat / off\x1b[0m to change message log`)
+  clientlog(`\x1b[38;2;252;246;50m${options.username} have joined ${options.host}:${options.port}\x1b[0m`)
+  clientlog(`Dùng \x1b[38;2;38;88;252m.help\x1b[0m để hiển thị toàn bộ command`)
+  clientlog(`Dùng \x1b[38;2;38;88;252m.meslog\x1b[0m \x1b[38;2;122;135;120mmes /chat / off\x1b[0m để đổi chế độ hiển thị chat`)
+  clientlog('\x1b[38;2;255;165;0m\u25A0\x1b[0m là mới thêm vào hoặc sửa gì đó')
+  clientlog('\x1b[38;2;71;242;48m\u25A0\x1b[0m là đã hoàn thiện')
+  clientlog('\x1b[38;2;252;227;38m\u25A0\x1b[0m là chưa thử nghiệm')
+  clientlog('\x1b[38;2;247;25;25m\u25A0\x1b[0m là chưa hoàn thiện hoặc lỗi mà chx sửa được')
   process.title = `${options.username} @ ${options.host}:${options.port}`
 })
 
@@ -67,35 +72,39 @@ rl.on('line', (command) => {
     switch(cmd) {
       case '.help':
         clientlog('\x1b[33mDanh sách lệnh của bot:\x1b[0m')
-        clientlog('\x1b[36m.chat | .send | .say\x1b[0m <message> - Gửi tin nhắn đến máy chủ.')
-        clientlog('\x1b[36m.cmd | .command\x1b[0m <command> - Gửi lệnh đến máy chủ mà không cần /.')
-        clientlog('\x1b[36m.coord | .coordinates\x1b[0m - Hiển thị tọa độ hiện tại của bot.')
-        clientlog('\x1b[36m.clear\x1b[0m - Xóa màn hình console.')
-        clientlog('\x1b[36m.inv | .inventory | .item | .items\x1b[0m - Hiển thị danh sách đồ trong túi đồ của bot.')
-        clientlog('\x1b[36m.webinv | .showinv\x1b[0m - Hiển thị kho đồ trong túi đồ của bot trên web.')
-        clientlog('\x1b[36m.server\x1b[0m - Hiển thị thông tin về máy chủ.')
-        clientlog('\x1b[36m.player | .players\x1b[0m - Liệt kê tất cả người chơi đang online.')
-        clientlog('\x1b[36m.playerinfo\x1b[0m <player> - Hiển thị thông tin chi tiết về một người chơi cụ thể.')
-        clientlog('\x1b[36m.goto\x1b[0m <x> <y> <z> or <player> - Di chuyển đến vị trí hoặc người chơi được chỉ định.')
-        clientlog('\x1b[36m.follow\x1b[0m <player> - Đi theo một người chơi khác trên máy chủ.')
-        clientlog('\x1b[36m.unfollow\x1b[0m - Thoát khỏi chế độ đi theo người chơi.')
-        clientlog('\x1b[36m.fight\x1b[0m <player> - PVP với một người chơi khác trên máy chủ.')
-        clientlog('\x1b[36m.sneak\x1b[0m - Bật chế độ lén bước.')
-        clientlog('\x1b[36m.unsneak\x1b[0m - Tắt chế độ lén bước.')
-        clientlog('\x1b[36m.jump\x1b[0m - Nhảy lên.')
-        clientlog('\x1b[36m.hand | .hands | .handslot\x1b[0m - Chuyển tay sử dụng.')
-        clientlog('\x1b[36m.equip\x1b[0m - Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,...')
-        clientlog('\x1b[36m.unequip\x1b[0m - Tháo item khỏi các vị trí: đầu, thân thể,...')
-        clientlog('\x1b[36m.afk\x1b[0m - Tự động di chuyển để tránh bị kick ra khi không hoạt động.') 
-        clientlog('\x1b[36m.stopafk\x1b[0m - Dừng chế độ tự động đi lại.')
-        clientlog('\x1b[36m.eat\x1b[0m - Ăn thức ăn.')
-        clientlog('\x1b[36m.guard\x1b[0m - Bảo vệ một khu vực (di chuyển và tấn công).')
-        clientlog('\x1b[36m.stopguard\x1b[0m - Dừng chế độ bảo vệ khu vực.')
-        clientlog('\x1b[36m.mine\x1b[0m - Đào block.') 
-        clientlog('\x1b[36m.meslog\x1b[0m - Lọc tin nhắn và chat.')
-        clientlog('\x1b[36m.dropslot\x1b[0m - Vứt toàn bộ đồ của 1 ô nào đó.')
-        clientlog('\x1b[36m.idslot\x1b[0m - Hiển thị slot id.')
-        clientlog('\x1b[36m.exit | .quit | .stop | .leave\x1b[0m - Dừng bot và thoát khỏi chương trình.')
+        clientlog('\x1b[38;2;71;242;48m.chat | .send | .say\x1b[0m <message> - Gửi tin nhắn đến máy chủ.')
+        clientlog('\x1b[38;2;71;242;48m.cmd | .command\x1b[0m <command> - Gửi lệnh đến máy chủ mà không cần /.')
+        clientlog('\x1b[38;2;71;242;48m.coord | .coordinates\x1b[0m - Hiển thị tọa độ hiện tại của bot.')
+        clientlog('\x1b[38;2;71;242;48m.clear\x1b[0m - Xóa màn hình console.')
+        clientlog('\x1b[38;2;71;242;48m.inv | .inventory | .item | .items\x1b[0m - Hiển thị danh sách đồ trong túi đồ của bot.')
+        clientlog('\x1b[38;2;71;242;48m.webinv | .showinv\x1b[0m - Hiển thị kho đồ trong túi đồ của bot trên web.')
+        clientlog('\x1b[38;2;71;242;48m.server\x1b[0m - Hiển thị thông tin về máy chủ.')
+        clientlog('\x1b[38;2;71;242;48m.player | .players\x1b[0m - Liệt kê tất cả người chơi đang online.')
+        clientlog('\x1b[38;2;71;242;48m.playerinfo\x1b[0m <player> - Hiển thị thông tin chi tiết về một người chơi cụ thể.')
+        clientlog('\x1b[38;2;71;242;48m.goto\x1b[0m <x> <y> <z> or <player> - Di chuyển đến vị trí hoặc người chơi được chỉ định.')
+        clientlog('\x1b[38;2;71;242;48m.follow\x1b[0m <player> - Đi theo một người chơi khác trên máy chủ.')
+        clientlog('\x1b[38;2;71;242;48m.unfollow\x1b[0m - Thoát khỏi chế độ đi theo người chơi.')
+        clientlog('\x1b[38;2;71;242;48m.fight\x1b[0m <player> - PVP với một người chơi khác trên máy chủ.')
+        clientlog('\x1b[38;2;71;242;48m.sneak\x1b[0m - Bật chế độ lén bước.')
+        clientlog('\x1b[38;2;71;242;48m.unsneak\x1b[0m - Tắt chế độ lén bước.')
+        clientlog('\x1b[38;2;255;165;0m.nbtitems\x1b[0m - Hiển thị thông tin chi tiết của toàn bộ item trong inventory.')
+        clientlog('\x1b[38;2;255;165;0m.nbtslot\x1b[0m - Hiển thị thông tin chi tiết của slot chỉ định trong inventory.')
+        clientlog('\x1b[38;2;255;165;0m.dropslot\x1b[0m - Vứt slot chỉ định trong inventory.')
+        clientlog('\x1b[38;2;255;165;0m.dropall\x1b[0m - Đang lỗi chưa tìm đc cách fix.')
+        clientlog('\x1b[38;2;71;242;48m.jump\x1b[0m - Nhảy lên.')
+        clientlog('\x1b[38;2;71;242;48m.hand | .hands | .handslot\x1b[0m - Chuyển tay sử dụng.')
+        clientlog('\x1b[38;2;247;25;25m.equip\x1b[0m - Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,...')
+        clientlog('\x1b[38;2;71;242;48m.unequip\x1b[0m - Tháo item khỏi các vị trí: đầu, thân thể,...')
+        clientlog('\x1b[38;2;71;242;48m.afk\x1b[0m - Tự động di chuyển để tránh bị kick ra khi không hoạt động.') 
+        clientlog('\x1b[38;2;71;242;48m.stopafk\x1b[0m - Dừng chế độ tự động đi lại.')
+        clientlog('\x1b[38;2;71;242;48m.eat\x1b[0m - Ăn thức ăn.')
+        clientlog('\x1b[38;2;252;227;38m.guard\x1b[0m - Bảo vệ một khu vực (di chuyển và tấn công).')
+        clientlog('\x1b[38;2;252;227;38m.stopguard\x1b[0m - Dừng chế độ bảo vệ khu vực.')
+        clientlog('\x1b[38;2;247;25;25m.mine\x1b[0m - Đào block.') 
+        clientlog('\x1b[38;2;71;242;48m.meslog\x1b[0m - Lọc tin nhắn và chat.')
+        clientlog('\x1b[38;2;71;242;48m.dropslot\x1b[0m - Vứt toàn bộ đồ của 1 ô nào đó.')
+        clientlog('\x1b[38;2;71;242;48m.idslot\x1b[0m - Hiển thị slot id.')
+        clientlog('\x1b[38;2;71;242;48m.exit | .quit | .stop | .leave\x1b[0m - Dừng bot và thoát khỏi chương trình.')
         break;
       
       case '.chat':
@@ -141,6 +150,26 @@ rl.on('line', (command) => {
           clientlog( `[Inventory] Slot ${item.slot} : ${item.name} x ${item.count}`)
         }
         break;
+
+      case '.nbtslot':
+        const nbtslot = arg[1];
+          if (nbtslot >= 0 && nbtslot < 45) {
+            if (bot.inventory.slots[nbtslot]) {
+              console.log(bot.inventory.slots[nbtslot]);
+            } else {
+              console.log(`This slot is empty`);
+            }
+          } else {
+            clientlog(`Invalid slot number. Use .nbtslot (0-44)`);
+          }
+        break;
+
+      case '.nbtitems':
+        for (let nbt = 0; nbt < bot.inventory.slots.length; nbt++) {
+          if (bot.inventory.slots[nbt])
+            console.log(bot.inventory.slots[nbt])
+          }
+        break;
       
       case '.hand':
       case '.hands':
@@ -151,53 +180,66 @@ rl.on('line', (command) => {
           let bquickbarchange = (arg[1] - 1)
           bot.setQuickBarSlot(bquickbarchange)
         break;
-//equip need to fix
+      //equip need to fix
       case '.equip':
         if (arg.length < 3) {
-          console.log('Vui lòng cho biết tên món đồ cần equip và vị trí muốn đi vào');
+          console.log('Vui lòng cung cấp tên món đồ và vị trí muốn equip');
           return;
-       }
-       const itemName = arg[1];
-       const destination = arg[2];
-      
-       const item = bot.inventory.findItemRange(item => item.id === itemName);
-       if (!item) {
+        }
+        const itemName = arg[1];
+        const destination = arg[2];
+
+        const item = bot.inventory.items().find(item => item.name === itemName);
+        if (!item) {
           console.log(`Bot không có ${itemName} để equip`);
           return;
-       }
-      
-       switch (destination) {
-          case 'hand':
-             bot.equip(item, destination, (err) => {
-                if (err) {
-                   console.log(`Không thể equip ${itemName} vào tay: ${err.message}`);
-                } else {
-                   console.log(`Đã equip ${itemName} vào tay`);
-                }
-             });
-             break;
+        }
+
+        switch (destination) {
+          case 'hand': {
+            const heldItem = bot.heldItem;
+            if (heldItem && heldItem.name === itemName) {
+              console.log(`${itemName} đã được giữ trong tay.`);
+              return;
+            }
+            bot.equip(item, 'hand', (err) => {
+              if (err) {
+                console.log(`Không thể equip ${itemName} vào tay: ${err.message}`);
+              } else {
+                console.log(`Đã equip ${itemName} vào tay.`);
+              }
+            });
+            break;
+          }
           case 'head':
           case 'torso':
           case 'legs':
-          case 'feet':
-             bot.unequip(destination, (err) => {
+          case 'feet': {
+            const armorSlot = bot.inventory.slots[bot.armorSlots[destination]];
+            if (armorSlot && armorSlot.name === itemName) {
+              console.log(`${itemName} đã được mặc trên ${destination}.`);
+              return;
+            }
+            bot.unequip(destination, (err) => {
+              if (err) {
+                console.log(`Không thể tháo ${destination} từ slot: ${err.message}`);
+                return;
+              }
+              bot.equip(item, destination, (err) => {
                 if (err) {
-                   console.log(`Không thể tháo ${destination} ra khỏi slot: ${err.message}`)
+                  console.log(`Không thể equip ${itemName} vào ${destination}: ${err.message}`);
                 } else {
-                   bot.equip(item, destination, (err) => {
-                      if (err) {
-                         console.log(`Không thể equip ${itemName} vào ${destination}: ${err.message}`);
-                      } else {
-                         console.log(`Đã equip ${itemName} vào ${destination}`);
-                      }
-                   });
+                  console.log(`Đã equip ${itemName} vào ${destination}.`);
                 }
-             });
-             break;
+              });
+            });
+            break;
+          }
           default:
-             console.log(`Vị trí muốn đi vào không hợp lệ`);
-          }      
+            console.log(`Vị trí muốn equip không hợp lệ.`);
+        }
         break;
+
 
       case '.unequip':
         if (!(arg[1] == 'head' || arg[1] == 'torso' || arg[1] == 'legs' || arg[1] == 'feet' || arg[1] == 'off-hand')) {
@@ -223,6 +265,18 @@ rl.on('line', (command) => {
         if (slot < 1 || slot > 44) { clientlog('Slot available (1-44)\n Use ".idslot" to see slot id'); return } 
         bot.tossStack(bot.inventory.slots[slot])
         clientlog(`Drop slot ${slot}`)
+        break;
+
+      case '.dropall':
+        var dropinv = true
+        let inventoryitem = bot.inventory.items().length;
+        if (inventoryitem === 0) dropinv = false;
+        while (dropinv) {
+          const item = bot.inventory.items()[0];
+          clientlog(`Throwed ${item.name} at slot ${item.slot}`);
+          bot.tossStack(item);
+          inventoryitem--;
+        }
         break;
 
       case '.idslot':
@@ -264,10 +318,6 @@ rl.on('line', (command) => {
 
       case '.tps':
         clientlog('Server tps: ' + bot.getTps())
-        break;
-
-      case '.test':
-        clientlog('/' + bot.game.maxPlayers)
         break;
     
       case '.player':
@@ -374,7 +424,7 @@ rl.on('line', (command) => {
   } else {
     bot.chat(command);
   }
-  
+
   function mineblock() {
     clientlog('Chx xong')
   }
@@ -544,7 +594,6 @@ rl.on('line', (command) => {
     clientlog(`Stopped fight player`);
   }
 })
-
 
 function clientlog(log) {
   console.log(`\x1b[38;2;72;250;235m[Q]\x1b[0m ${log}`)
