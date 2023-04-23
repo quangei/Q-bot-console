@@ -5,19 +5,18 @@ const pvp = require('mineflayer-pvp').plugin
 const tpsPlugin = require('mineflayer-tps')(mineflayer)
 const armorManager = require('mineflayer-armor-manager')
 const collectBlock = require('mineflayer-collectblock').plugin
+const autoeat = require('mineflayer-auto-eat').plugin
 
 const rlsync = require('readline-sync')
-let bname = rlsync.question('Bot name: ')
-let bip = rlsync.question('Server ip: ')
-let bver = rlsync.question('Version: ')
+let bname = 'Bot'
+let bip = '192.168.1.5:57917'
+let bver = '1.18.2'
 let ip = bip.split(':');
 
 const opn = require('opn');
 const path = require('path');
 
 const readline = require('readline')
-const { once } = require('events')
-const { SocketAddress } = require('net')
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -35,7 +34,7 @@ const bot = mineflayer.createBot(options)
 console.log(options)
 
 bot.on('login', () => {
-  clientlog(`\x1b[38;2;252;246;50m${options.username} have joined ${options.host}:${options.port}\x1b[0m`)
+  clientlog(`\x1b[38;2;252;246;50m${options.username} login in ${options.host}:${options.port}\x1b[0m`)
   clientlog(`Dùng \x1b[38;2;38;88;252m.help\x1b[0m để hiển thị toàn bộ command`)
   clientlog(`Dùng \x1b[38;2;38;88;252m.meslog\x1b[0m \x1b[38;2;122;135;120mmes /chat / off\x1b[0m để đổi chế độ hiển thị chat`)
   clientlog('\x1b[38;2;255;165;0m\u25A0\x1b[0m là mới thêm vào hoặc sửa gì đó')
@@ -56,6 +55,7 @@ bot.loadPlugin(pvp)
 bot.loadPlugin(tpsPlugin)
 bot.loadPlugin(armorManager)
 bot.loadPlugin(collectBlock)
+bot.loadPlugin(autoeat)
 
 bot.armorManager.equipAll()
 
@@ -67,51 +67,170 @@ inventoryViewer(bot, invoptions)
 rl.on('line', (command) => {
   let arg = command.split(' ')
   let cmd = arg[0]
-
   if (cmd.startsWith('.')) {
     switch(cmd) {
       case '.help':
-        clientlog('\x1b[33mDanh sách lệnh của bot:\x1b[0m')
-        clientlog('\x1b[38;2;71;242;48m.chat | .send | .say\x1b[0m <message> - Gửi tin nhắn đến máy chủ.')
-        clientlog('\x1b[38;2;71;242;48m.cmd | .command\x1b[0m <command> - Gửi lệnh đến máy chủ mà không cần /.')
-        clientlog('\x1b[38;2;71;242;48m.coord | .coordinates\x1b[0m - Hiển thị tọa độ hiện tại của bot.')
-        clientlog('\x1b[38;2;71;242;48m.clear\x1b[0m - Xóa màn hình console.')
-        clientlog('\x1b[38;2;71;242;48m.inv | .inventory | .item | .items\x1b[0m - Hiển thị danh sách đồ trong túi đồ của bot.')
-        clientlog('\x1b[38;2;71;242;48m.webinv | .showinv\x1b[0m - Hiển thị kho đồ trong túi đồ của bot trên web.')
-        clientlog('\x1b[38;2;71;242;48m.server\x1b[0m - Hiển thị thông tin về máy chủ.')
-        clientlog('\x1b[38;2;71;242;48m.player | .players\x1b[0m - Liệt kê tất cả người chơi đang online.')
-        clientlog('\x1b[38;2;71;242;48m.playerinfo\x1b[0m <player> - Hiển thị thông tin chi tiết về một người chơi cụ thể.')
-        clientlog('\x1b[38;2;71;242;48m.goto\x1b[0m <x> <y> <z> or <player> - Di chuyển đến vị trí hoặc người chơi được chỉ định.')
-        clientlog('\x1b[38;2;71;242;48m.follow\x1b[0m <player> - Đi theo một người chơi khác trên máy chủ.')
-        clientlog('\x1b[38;2;71;242;48m.unfollow\x1b[0m - Thoát khỏi chế độ đi theo người chơi.')
-        clientlog('\x1b[38;2;71;242;48m.fight\x1b[0m <player> - PVP với một người chơi khác trên máy chủ.')
-        clientlog('\x1b[38;2;71;242;48m.sneak\x1b[0m - Bật chế độ lén bước.')
-        clientlog('\x1b[38;2;71;242;48m.unsneak\x1b[0m - Tắt chế độ lén bước.')
-        clientlog('\x1b[38;2;255;165;0m.nbtitems\x1b[0m - Hiển thị thông tin chi tiết của toàn bộ item trong inventory.')
-        clientlog('\x1b[38;2;255;165;0m.nbtslot\x1b[0m - Hiển thị thông tin chi tiết của slot chỉ định trong inventory.')
-        clientlog('\x1b[38;2;255;165;0m.dropslot\x1b[0m - Vứt slot chỉ định trong inventory.')
-        clientlog('\x1b[38;2;255;165;0m.dropall\x1b[0m - Đang lỗi chưa tìm đc cách fix.')
-        clientlog('\x1b[38;2;71;242;48m.jump\x1b[0m - Nhảy lên.')
-        clientlog('\x1b[38;2;71;242;48m.hand | .hands | .handslot\x1b[0m - Chuyển tay sử dụng.')
-        clientlog('\x1b[38;2;247;25;25m.equip\x1b[0m - Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,...')
-        clientlog('\x1b[38;2;71;242;48m.unequip\x1b[0m - Tháo item khỏi các vị trí: đầu, thân thể,...')
-        clientlog('\x1b[38;2;71;242;48m.afk\x1b[0m - Tự động di chuyển để tránh bị kick ra khi không hoạt động.') 
-        clientlog('\x1b[38;2;71;242;48m.stopafk\x1b[0m - Dừng chế độ tự động đi lại.')
-        clientlog('\x1b[38;2;71;242;48m.eat\x1b[0m - Ăn thức ăn.')
-        clientlog('\x1b[38;2;252;227;38m.guard\x1b[0m - Bảo vệ một khu vực (di chuyển và tấn công).')
-        clientlog('\x1b[38;2;252;227;38m.stopguard\x1b[0m - Dừng chế độ bảo vệ khu vực.')
-        clientlog('\x1b[38;2;247;25;25m.mine\x1b[0m - Đào block.') 
-        clientlog('\x1b[38;2;71;242;48m.meslog\x1b[0m - Lọc tin nhắn và chat.')
-        clientlog('\x1b[38;2;71;242;48m.dropslot\x1b[0m - Vứt toàn bộ đồ của 1 ô nào đó.')
-        clientlog('\x1b[38;2;71;242;48m.idslot\x1b[0m - Hiển thị slot id.')
-        clientlog('\x1b[38;2;71;242;48m.exit | .quit | .stop | .leave\x1b[0m - Dừng bot và thoát khỏi chương trình.')
+        const commands = [
+          {
+            name: ".help",
+            description: "Hiển thị danh sách lệnh"
+          },
+          {
+            name: ".chat | .send | .say",
+            description: "Gửi tin nhắn đến máy chủ."
+          },
+          {
+            name: ".cmd | .command",
+            description: "Gửi lệnh đến máy chủ mà không cần /."
+          },
+          {
+            name: ".coord | .coordinates",
+            description: "Hiển thị tọa độ hiện tại của bot."
+          },
+          {
+            name: ".clear",
+            description: "Xóa màn hình console."
+          },
+          {
+            name: ".inv | .inventory",
+            description: "Hiển thị iventory trong túi đồ của bot."
+          },
+          {
+            name: ".item | .items",
+            description: "Hiển thị item trong túi đồ của bot."
+          },
+          {
+            name: ".webinv | .showinv",
+            description: "Hiển thị kho đồ trong túi đồ của bot trên web."
+          },
+          {
+            name: ".server",
+            description: "Hiển thị thông tin về máy chủ."
+          },
+          {
+            name: ".player | .players",
+            description: "Liệt kê tất cả người chơi đang online."
+          },
+          {
+            name: ".playerinfo",
+            description: "Hiển thị thông tin chi tiết về một người chơi cụ thể."
+          },
+          {
+            name: ".goto",
+            description: "Di chuyển đến vị trí hoặc người chơi được chỉ định."
+          },
+          {
+            name: ".follow",
+            description: "Đi theo một người chơi khác trên máy chủ."
+          },
+          {
+            name: ".unfollow",
+            description: "Thoát khỏi chế độ đi theo người chơi."
+          },
+          {
+            name: ".fight",
+            description: "PVP với một người chơi khác trên máy chủ."
+          },
+          {
+            name: ".sneak",
+            description: "Bật chế độ lén bước."
+          },
+          {
+            name: ".unsneak",
+            description: "Tắt chế độ lén bước."
+          },
+          {
+            name: ".nbtitems",
+            description: "Hiển thị thông tin chi tiết của toàn bộ item trong inventory."
+          },
+          {
+            name: ".nbtslot",
+            description: ".Hiển thị thông tin chi tiết của slot chỉ định trong inventory."
+          },
+          {
+            name: ".dropslot",
+            description: "Vứt slot chỉ định trong inventory."
+          },
+          {
+            name: ".dropall",
+            description: "Đang lỗi chưa tìm đc cách fix."
+          },
+          {
+            name: ".jump",
+            description: "Nhảy lên."
+          },
+          {
+            name: ".hand | .hands | .handslot",
+            description: "Chuyển tay sử dụng."
+          },
+          {
+            name: ".equip",
+            description: "Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,..."
+          },
+          {
+            name: ".unequip",
+            description: "Tháo item khỏi các vị trí: đầu, thân thể,..."
+          },
+          {
+            name: ".afk",
+            description: "Tự động di chuyển để tránh bị kick ra khi không hoạt động."
+          },
+          {
+            name: ".stopafk",
+            description: "Dừng chế độ tự động đi lại."
+          },
+          {
+            name: ".eat",
+            description: "Ăn thức ăn."
+          },
+          {
+            name: ".guard",
+            description: "Bảo vệ một khu vực (di chuyển và tấn công)."
+          },
+          {
+            name: ".stopguard",
+            description: "Dừng chế độ bảo vệ khu vực."
+          },
+          {
+            name: ".mine",
+            description: "Đào block."
+          },
+          {
+            name: ".meslog",
+            description: "Lọc tin nhắn và chat."
+          },
+          {
+            name: ".dropslot",
+            description: "Vứt toàn bộ đồ của 1 ô nào đó."
+          },
+          {
+            name: ".idslot",
+            description: "Hiển thị slot id."
+          },
+          {
+            name: ".disconnect",
+            description: "Cho bot rời server."
+          },
+          {
+            name: ".reconnect",
+            description: "Cho bot vào lại server."
+          },
+          {
+            name: ".exit | .quit | .leave",
+            description: "Cho bot rời server và thoát khỏi chương trình."
+          }
+        ];
+        clientlog("\x1b[33mDanh sách lệnh của bot:\x1b[0m");
+        commands.forEach(availablecommand => {
+          clientlog(`\x1b[38;2;71;242;48m${availablecommand.name}\x1b[0m - ${availablecommand.description}`);
+        });
         break;
       
       case '.chat':
       case '.send':
       case '.say':
         if (!arg[1]) {
-          clientlog('[CHAT] Chat must be need arguments')
+          clientlog('Chat must be need arguments')
         }
         bot.chat(message.substring(5))
         break;
@@ -119,7 +238,7 @@ rl.on('line', (command) => {
       case '.cmd':
       case '.command':
         if (!arg[1]) {
-          clientlog('[CMD] Chat must be need arguments')
+          clientlog('Command must be need arguments')
         }
         bot.chat('/'+message.substring(5))
         break;
@@ -131,10 +250,24 @@ rl.on('line', (command) => {
         break;
 
       case '.info':
+        const world = bot.game.dimension
+        const world2 = world.split(':')
+        const worldname = world2[1]
+        const effects = bot.entity.effects;
         clientlog(`Health: ${bot.health} / Food: ${bot.food}`)
         clientlog(`Oxygen: ${bot.oxygenLevel}`)
-        clientlog(`Coordinates: ${bot.entity.position} at world ${bot.game.dimension}`)
-        clientlog(``)
+        clientlog(`Coordinates: ${bot.entity.position} at ${worldname}`)
+        if (effects.size > 0) {
+          clientlog(`Bot đang có các hiệu ứng sau:`);
+          effects.forEach((effect) => {
+            const name = effect.name;
+            const level = effect.amplifier + 1;
+            const duration = effect.duration / 20;
+            clientlog(`- ${name} cấp độ ${level}, thời lượng ${duration} giây`);
+          });
+        } else {
+          clientlog('Bot không có bất kỳ hiệu ứng nào');
+        }
         break;
     
       case '.clear':
@@ -144,10 +277,20 @@ rl.on('line', (command) => {
     
       case '.inv':
       case '.inventory':
+        const invitems = bot.inventory.items();
+        clientlog(`                     BOT INVENTORY                             `);
+        clientlog(`| Slot | Name                      | Count  | id_item                   |`);
+        clientlog(`|=======================================================================|`)
+        for (let i = 0; i < invitems.length; i++) {
+          const item = invitems[i];
+          clientlog(`| ${item.slot.toString().padEnd(4)} | ${item.displayName.padEnd(25)} | ${item.count.toString().padEnd(6)} | ${item.name.padEnd(25)} |`);
+        }
+        break;
+
       case '.item':
       case '.items':
         for (const item of bot.inventory.items()) {
-          clientlog( `[Inventory] Slot ${item.slot} : ${item.name} x ${item.count}`)
+          clientlog(`[Item] Slot ${item.slot.toString().padEnd(2)} : ${item.name} x ${item.count} ${JSON.stringify(item.enchants)}`);
         }
         break;
 
@@ -252,7 +395,7 @@ rl.on('line', (command) => {
 
       case '.webinv':
       case '.showinv':
-      case 'invsee':
+      case '.invsee':
         const invslot = path.join(__dirname, 'invslot.png');
         clientlog("Open web inventory in http://localhost:"+ invoptions.port)
         clientlog(`Open invslot`)
@@ -260,23 +403,22 @@ rl.on('line', (command) => {
         opn(invslot)
         break;
 
-      case '.dropslot':
-        let slot = arg[1]
-        if (slot < 1 || slot > 44) { clientlog('Slot available (1-44)\n Use ".idslot" to see slot id'); return } 
-        bot.tossStack(bot.inventory.slots[slot])
-        clientlog(`Drop slot ${slot}`)
-        break;
+        case '.dropslot':
+          let slot = arg[1]
+          if (!slot) return
+          if (slot < 1 || slot > 44) {clientlog('Slot available (1-44)\n Use ".idslot" to see slot id'); return} 
+          let dropslot = bot.inventory.slots[slot]
+          if (dropslot && dropslot.type !== -1) {
+            bot.tossStack(dropslot)
+            clientlog(`Drop slot ${slot}`)
+          } else {
+            clientlog(`Slot ${slot} is empty or invalid`)
+          }
+          break;
 
       case '.dropall':
-        var dropinv = true
-        let inventoryitem = bot.inventory.items().length;
-        if (inventoryitem === 0) dropinv = false;
-        while (dropinv) {
-          const item = bot.inventory.items()[0];
-          clientlog(`Throwed ${item.name} at slot ${item.slot}`);
-          bot.tossStack(item);
-          inventoryitem--;
-        }
+        const items = bot.inventory.items()
+        bot.tossStack(items)
         break;
 
       case '.idslot':
@@ -310,10 +452,11 @@ rl.on('line', (command) => {
         break;
 
       case '.server':
-        clientlog(`[IP] ${options.host}:${options.port}`)
-        clientlog(`[Ver] ${options.version}`)
-        clientlog(`[TPS] ${bot.getTps()}`)
-        clientlog(`[Difficulty] ${bot.game.difficulty}`)
+        clientlog(`IP: ${options.host}:${options.port}`)
+        clientlog(`Ver: ${options.version}`)
+        clientlog(`TPS: ${bot.getTps()}`)
+        clientlog(`Difficulty: ${bot.game.difficulty}`)
+        clientlog(`Hardcore: ${bot.game.hardcore}`)
         break;
 
       case '.tps':
@@ -325,6 +468,7 @@ rl.on('line', (command) => {
         const players = Object.keys(bot.players).map((name) => `\x1b[32m${name}(${bot.players[name].ping}ms)\x1b[0m`).join(' | ');
         clientlog(`[Player List] ${players}`);
         break;
+        
       case '.playerinfo':
         if (arg.length < 2) {
           clientlog('[Player Info] .playerinfo <player>\n[Player Info] Example: .playerinfo bot');
@@ -339,22 +483,15 @@ rl.on('line', (command) => {
         }
         break;
       
-      case '.exit':
-      case '.leave':
-      case '.stop':
-      case '.quit':
-        clientlog(`${options.username} left ${options.host}:${options.port}`);
-        process.exit();
-        break;
       
       case '.sneak':
         bot.setControlState('sneak', true);
-        clientlog(`[Bot] ${bot.username} start sneak`);
+        clientlog(`${bot.username} start sneak`);
         break;
       
       case '.unsneak':
         bot.setControlState('sneak', false);
-        clientlog(`[Bot] ${bot.username} stop sneak`);
+        clientlog(`${bot.username} stop sneak`);
         break;
       
       case '.jump':
@@ -387,13 +524,30 @@ rl.on('line', (command) => {
         clearTimeout(afktimer);
         break;
       
-      case '.eat':
-        eatfood()
+      case ".eat":
+        const eatitem = arg[0]
+        if (!eatitem) {
+          clientlog("Please specify an item to eat.");
+          break;
+        }
+        const inventory = getInventory(arg[1].id);
+        if (!inventory.includes(eatitem)) {
+          clientlog(`You don't have ${eatitem} in your inventory.`);
+          break;
+        }
+        removeeatitemFromInventory(arg[1].id, eatitem);
+        increaseHealth(arg[1].id, 10);
+        clientlog(`You ate ${eatitem} and gained 10 health.`);
         break;
 
       case '.guard':
-        const guardpos = bot.entity.position
-        guardArea(guardposition)
+        if (!arg[1]) return 
+        const username = arg[1]
+        if (!username) {
+          clientlog(`I don't see a player`)
+        }
+        const position = bot.players[username].position
+        guardArea(position)
         break;
 
       case '.stopguard':
@@ -416,6 +570,22 @@ rl.on('line', (command) => {
 
       case '.mine':
         mineblock()
+        break;
+
+      case '.disconnect':
+        bot.quit()
+        clientlog(`${options.username} left ${options.host}:${options.port}`)
+        break;
+
+      case '.reconnect':
+        mineflayer.createBot(options)
+        break;
+
+      case '.exit':
+      case '.leave':
+      case '.quit':
+        clientlog(`${options.username} left ${options.host}:${options.port}`);
+        process.exit();
         break;
 
       default:
@@ -559,30 +729,6 @@ rl.on('line', (command) => {
     bot.pathfinder.setGoal(new GoalBlock(guardPos.x, guardPos.y, guardPos.z))
   }
 
-  function eatfood() {  
-    const mcData = require('minecraft-data')(bot.version);
-    const food = mcData.itemsByName['cooked_beef'];
-    if (food) {
-      const items = bot.inventory.items().filter(item => item.type === food.id);
-      if (items.length > 0) {
-        bot.equip(food, 'hand', (err) => {
-          if (err) {
-            clientlog(err);
-          }
-          bot.activateItem((err) => {
-            if (err) {
-              clientlog(err);
-            }
-          });
-        });
-      } else {
-        clientlog("No food in inventory.");
-      }
-    } else {
-      clientlog("This version of Minecraft doesn't have cooked beef.");
-    }
-  }
-
   function followattack(player) {
     if (player == bot.player) { return }
     clientlog('Following ' + player.username + ' to attack')
@@ -598,6 +744,16 @@ rl.on('line', (command) => {
 function clientlog(log) {
   console.log(`\x1b[38;2;72;250;235m[Q]\x1b[0m ${log}`)
 }
+
+bot.on('autoeat_started', (item, offhand) => {
+  console.log(`Eating ${item.name} in ${offhand ? 'offhand' : 'hand'}`)
+})
+
+bot.on('autoeat_finished', (item, offhand) => {
+  console.log(`Finished eating ${item.name} in ${offhand ? 'offhand' : 'hand'}`)
+})
+
+bot.on('autoeat_error', console.error)
 
 bot.on('kicked', console.log)
 bot.on('error', console.log)
