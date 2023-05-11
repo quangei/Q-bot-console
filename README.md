@@ -71,4 +71,10 @@ This program use mineflayer and mineflayer-plugins
 | mineflayer-pvp |
 | mineflayer-pathfinder |
 | mineflayer-armor-manager |
-| portscanner |
+| mineflayer-collectblock |
+| mineflayer-tool |
+| mineflayer-tps|
+| opn |
+| readline |
+| readline-sync |
+ 
