@@ -1,7 +1,7 @@
-This program use mineflayer and mineflayer-plugins
-
 # Q-bot-console
 Minecraft bot with chat and some command
+
+This program use mineflayer and mineflayer-plugins
 
 # How to use:
 - Install node.js https://nodejs.org/en
