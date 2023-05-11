@@ -1,3 +1,5 @@
+This program use mineflayer and mineflayer-plugins
+
 # Q-bot-console
 Minecraft bot with chat and some command
 
@@ -9,6 +11,7 @@ Minecraft bot with chat and some command
 - Use `cd q-bot-console`
 - Use `npm install`
 - Use `node bot.js`
+- Or you can download .exe
 
 # Command list:
  - .help: Hiển thị danh sách các lệnh của bot.
@@ -40,5 +43,3 @@ Minecraft bot with chat and some command
  - .meslog: Lọc tin nhắn và chat.
 
 This project still not finish
-  
-This bot is code by Vietnamese people.
