@@ -63,3 +63,12 @@ This program use mineflayer and mineflayer-plugins
  - .setinvslot - Chx xg.
  - .clearslot <slot> - Xóa 1 ô đồ trong chế độ creative.
  - .clearinv | .clearinventory - Xóa 1 ô đồ trong chế độ creative.
+ 
+| Node packages |
+|:------------|
+| mineflayer |
+| mineflayer-web-inventory |
+| mineflayer-pvp |
+| mineflayer-pathfinder |
+| mineflayer-armor-manager |
+| portscanner |
