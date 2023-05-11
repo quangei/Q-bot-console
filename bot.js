@@ -5,16 +5,28 @@ const pvp = require('mineflayer-pvp').plugin
 const tpsPlugin = require('mineflayer-tps')(mineflayer)
 const armorManager = require('mineflayer-armor-manager')
 const collectBlock = require('mineflayer-collectblock').plugin
-const autoeat = require('mineflayer-auto-eat').plugin
 
 const rlsync = require('readline-sync')
-let bname = 'Bot'
-let bip = '192.168.1.5:57917'
-let bver = '1.18.2'
-let ip = bip.split(':');
+let bacctype = rlsync.question(`Auth: `)
 
-const opn = require('opn');
-const path = require('path');
+let bauth, bname, bpass;
+if (bacctype === 'mojang') {
+  bauth = 'mojang';
+  bname = rlsync.question(`Email: `)
+  bpass = rlsync.question('Password: ');
+} else if (bacctype === 'microsoft') {
+  bauth = 'microsoft';
+  bname = rlsync.question(`Email: `)
+  bpass = rlsync.question('Password: ');
+} else {
+  bauth = 'offline';
+  bname = rlsync.question(`Name: `)
+  bpass = '';
+}
+
+let bip = rlsync.question(`Server: `)
+let bver = rlsync.question(`Version: `)
+let ip = bip.split(':');
 
 const readline = require('readline')
 const rl = readline.createInterface({
@@ -22,386 +34,519 @@ const rl = readline.createInterface({
   output: process.stdout,
 })
 
+const opn = require('opn');
+const path = require('path');
+
 const options = {
   username: bname,
   host: ip[0],
   port: ip[1],
   version: bver,
+  auth: bauth,
+  password: bpass
 }
 
-const bot = mineflayer.createBot(options)
+createbot()
 
-console.log(options)
+function createbot() {
+  const bot = mineflayer.createBot(options)
 
-bot.on('login', () => {
-  clientlog(`\x1b[38;2;252;246;50m${options.username} login in ${options.host}:${options.port}\x1b[0m`)
-  clientlog(`Dùng \x1b[38;2;38;88;252m.help\x1b[0m để hiển thị toàn bộ command`)
-  clientlog(`Dùng \x1b[38;2;38;88;252m.meslog\x1b[0m \x1b[38;2;122;135;120mmes /chat / off\x1b[0m để đổi chế độ hiển thị chat`)
-  clientlog('\x1b[38;2;255;165;0m\u25A0\x1b[0m là mới thêm vào hoặc sửa gì đó')
-  clientlog('\x1b[38;2;71;242;48m\u25A0\x1b[0m là đã hoàn thiện')
-  clientlog('\x1b[38;2;252;227;38m\u25A0\x1b[0m là chưa thử nghiệm')
-  clientlog('\x1b[38;2;247;25;25m\u25A0\x1b[0m là chưa hoàn thiện hoặc lỗi mà chx sửa được')
-  process.title = `${options.username} @ ${options.host}:${options.port}`
-})
+  console.log(options)
 
-bot.on('spawn', () => {
-  const mcData = require('minecraft-data')(bot.version);
-  movements = new Movements(bot, mcData);
-  bot.pathfinder.setMovements(movements)
-})
+  bot.on('login', () => {
+    clientlog(`\x1b[38;2;252;246;50m${options.username} login in ${options.host}:${options.port}\x1b[0m`)
+    clientlog(`Dùng \x1b[38;2;38;88;252m.help\x1b[0m để hiển thị toàn bộ command`)
+    clientlog(`Dùng \x1b[38;2;38;88;252m.meslog\x1b[0m \x1b[38;2;122;135;120mall /mes /chat / off\x1b[0m để đổi chế độ hiển thị chat`)
+    process.title = `${options.username} @ ${options.host}:${options.port}`
+    logmes('all')
+  })
 
-bot.loadPlugin(pathfinder)
-bot.loadPlugin(pvp)
-bot.loadPlugin(tpsPlugin)
-bot.loadPlugin(armorManager)
-bot.loadPlugin(collectBlock)
-bot.loadPlugin(autoeat)
+  bot.on('spawn', () => {
+    const mcData = require('minecraft-data')(bot.version);
+    movements = new Movements(bot, mcData);
+    bot.pathfinder.setMovements(movements)
+  })
 
-bot.armorManager.equipAll()
+  bot.loadPlugin(pathfinder)
+  bot.loadPlugin(pvp)
+  bot.loadPlugin(tpsPlugin)
+  bot.loadPlugin(armorManager)
+  bot.loadPlugin(collectBlock)
 
-let invoptions = {
-  port: 4000,
-}
-inventoryViewer(bot, invoptions)
+  bot.armorManager.equipAll()
 
-rl.on('line', (command) => {
-  let arg = command.split(' ')
-  let cmd = arg[0]
-  if (cmd.startsWith('.')) {
-    switch(cmd) {
-      case '.help':
-        const commands = [
-          {
-            name: ".help",
-            description: "Hiển thị danh sách lệnh"
-          },
-          {
-            name: ".chat | .send | .say",
-            description: "Gửi tin nhắn đến máy chủ."
-          },
-          {
-            name: ".cmd | .command",
-            description: "Gửi lệnh đến máy chủ mà không cần /."
-          },
-          {
-            name: ".coord | .coordinates",
-            description: "Hiển thị tọa độ hiện tại của bot."
-          },
-          {
-            name: ".clear",
-            description: "Xóa màn hình console."
-          },
-          {
-            name: ".inv | .inventory",
-            description: "Hiển thị iventory trong túi đồ của bot."
-          },
-          {
-            name: ".item | .items",
-            description: "Hiển thị item trong túi đồ của bot."
-          },
-          {
-            name: ".webinv | .showinv",
-            description: "Hiển thị kho đồ trong túi đồ của bot trên web."
-          },
-          {
-            name: ".server",
-            description: "Hiển thị thông tin về máy chủ."
-          },
-          {
-            name: ".player | .players",
-            description: "Liệt kê tất cả người chơi đang online."
-          },
-          {
-            name: ".playerinfo",
-            description: "Hiển thị thông tin chi tiết về một người chơi cụ thể."
-          },
-          {
-            name: ".goto",
-            description: "Di chuyển đến vị trí hoặc người chơi được chỉ định."
-          },
-          {
-            name: ".follow",
-            description: "Đi theo một người chơi khác trên máy chủ."
-          },
-          {
-            name: ".unfollow",
-            description: "Thoát khỏi chế độ đi theo người chơi."
-          },
-          {
-            name: ".fight",
-            description: "PVP với một người chơi khác trên máy chủ."
-          },
-          {
-            name: ".sneak",
-            description: "Bật chế độ lén bước."
-          },
-          {
-            name: ".unsneak",
-            description: "Tắt chế độ lén bước."
-          },
-          {
-            name: ".nbtitems",
-            description: "Hiển thị thông tin chi tiết của toàn bộ item trong inventory."
-          },
-          {
-            name: ".nbtslot",
-            description: ".Hiển thị thông tin chi tiết của slot chỉ định trong inventory."
-          },
-          {
-            name: ".dropslot",
-            description: "Vứt slot chỉ định trong inventory."
-          },
-          {
-            name: ".dropall",
-            description: "Đang lỗi chưa tìm đc cách fix."
-          },
-          {
-            name: ".jump",
-            description: "Nhảy lên."
-          },
-          {
-            name: ".hand | .hands | .handslot",
-            description: "Chuyển tay sử dụng."
-          },
-          {
-            name: ".equip",
-            description: "Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,..."
-          },
-          {
-            name: ".unequip",
-            description: "Tháo item khỏi các vị trí: đầu, thân thể,..."
-          },
-          {
-            name: ".afk",
-            description: "Tự động di chuyển để tránh bị kick ra khi không hoạt động."
-          },
-          {
-            name: ".stopafk",
-            description: "Dừng chế độ tự động đi lại."
-          },
-          {
-            name: ".eat",
-            description: "Ăn thức ăn."
-          },
-          {
-            name: ".guard",
-            description: "Bảo vệ một khu vực (di chuyển và tấn công)."
-          },
-          {
-            name: ".stopguard",
-            description: "Dừng chế độ bảo vệ khu vực."
-          },
-          {
-            name: ".mine",
-            description: "Đào block."
-          },
-          {
-            name: ".meslog",
-            description: "Lọc tin nhắn và chat."
-          },
-          {
-            name: ".dropslot",
-            description: "Vứt toàn bộ đồ của 1 ô nào đó."
-          },
-          {
-            name: ".idslot",
-            description: "Hiển thị slot id."
-          },
-          {
-            name: ".disconnect",
-            description: "Cho bot rời server."
-          },
-          {
-            name: ".reconnect",
-            description: "Cho bot vào lại server."
-          },
-          {
-            name: ".exit | .quit | .leave",
-            description: "Cho bot rời server và thoát khỏi chương trình."
-          }
-        ];
-        clientlog("\x1b[33mDanh sách lệnh của bot:\x1b[0m");
-        commands.forEach(availablecommand => {
-          clientlog(`\x1b[38;2;71;242;48m${availablecommand.name}\x1b[0m - ${availablecommand.description}`);
-        });
-        break;
-      
-      case '.chat':
-      case '.send':
-      case '.say':
-        if (!arg[1]) {
-          clientlog('Chat must be need arguments')
-        }
-        bot.chat(message.substring(5))
-        break;
-      
-      case '.cmd':
-      case '.command':
-        if (!arg[1]) {
-          clientlog('Command must be need arguments')
-        }
-        bot.chat('/'+message.substring(5))
-        break;
-    
-      case '.coord':
-      case '.coordinates':
-        clientlog(`[Coordinates] ${bot.entity.position}`);
-        clientlog(`[World] ${bot.game.dimension}`);
-        break;
+  let invoptions = {
+    port: 4000,
+  }
+  inventoryViewer(bot, invoptions)
 
-      case '.info':
-        const world = bot.game.dimension
-        const world2 = world.split(':')
-        const worldname = world2[1]
-        const effects = bot.entity.effects;
-        clientlog(`Health: ${bot.health} / Food: ${bot.food}`)
-        clientlog(`Oxygen: ${bot.oxygenLevel}`)
-        clientlog(`Coordinates: ${bot.entity.position} at ${worldname}`)
-        if (effects.size > 0) {
-          clientlog(`Bot đang có các hiệu ứng sau:`);
-          effects.forEach((effect) => {
-            const name = effect.name;
-            const level = effect.amplifier + 1;
-            const duration = effect.duration / 20;
-            clientlog(`- ${name} cấp độ ${level}, thời lượng ${duration} giây`);
+  rl.on('line', (command) => {
+    let arg = command.split(' ')
+    let cmd = arg[0]
+    if (cmd.startsWith('.')) {
+      switch(cmd) {
+        case '.help':
+          const cguis = [
+            {
+              usage: ".help",
+              description: "Hiển thị danh sách lệnh"
+            },
+            {
+              usage: ".clear",
+              description: "Xóa màn hình console."
+            },
+            {
+              usage: ".meslog",
+              description: "Lọc tin nhắn và chat."
+            },
+          ];
+          const cchats = [
+            {
+              usage: ".chat | .send | .say <message>",
+              description: "Gửi tin nhắn đến máy chủ"
+            },
+            {
+              usage: ".cmd | .command <command>",
+              description: "Gửi lệnh đến máy chủ mà không cần /"
+            },
+            {
+              usage: ".spam <mes> <delay> <time> (BETA)",
+              description: "Spam gì đó vào đến máy chủ"
+            }  
+          ];
+          const cbotinfos = [
+            {
+              usage: ".coord | .coordinates",
+              description: "Gửi tin nhắn đến máy chủ"
+            },
+            {
+              usage: ".inv | .inventory",
+              description: "Hiển thị iventory trong túi đồ của bot."
+            },
+            {
+              usage: ".item | .items",
+              description: "Hiển thị item trong túi đồ của bot."
+            },
+            {
+              usage: ".itemslot <slot> (1-44)",
+              description: "Hiển thị thông tin chi tiết của item trong slot được nhập."
+            },
+            {
+              usage: ".webinv | .showinv | .invsee",
+              description: "Hiển thị kho đồ trong túi đồ của bot trên web."
+            },
+            {
+              usage: ".server",
+              description: "Hiển thị thông tin về máy chủ."
+            },
+            {
+              usage: ".player | .players",
+              description: "Liệt kê tất cả người chơi đang online."
+            },
+            {
+              usage: ".playerinfo",
+              description: "Hiển thị thông tin chi tiết về một người chơi cụ thể."
+            },
+            {
+              usage: ".nbtitems",
+              description: "Hiển thị thông tin chi tiết của toàn bộ item trong inventory."
+            },
+            {
+              usage: ".nbtslot <slot> (1-44)",
+              description: ".Hiển thị thông tin chi tiết của slot chỉ định trong inventory."
+            },
+            {
+              usage: ".idslot",
+              description: "Hiển thị slot id."
+            },
+          ];
+          const cmoments = [
+            {
+              usage: ".goto <player> <postion>",
+              description: "Di chuyển đến vị trí hoặc người chơi được chỉ định."
+            },
+            {
+              usage: ".stopgoto",
+              destination: "Dừng đi đến vị trí hoặc người chơi."
+            },
+            {
+              usage: ".follow <player>",
+              description: "Đi theo một người chơi khác trên máy chủ."
+            },
+            {
+              usage: ".unfollow",
+              description: "Thoát khỏi chế độ đi theo người chơi."
+            },
+            {
+              usage: ".fight <player>",
+              description: "PVP với một người chơi khác trên máy chủ."
+            },
+            {
+              usage: ".sneak",
+              description: "Bật chế độ lén bước."
+            },
+            {
+              usage: ".unsneak",
+              description: "Tắt chế độ lén bước."
+            },
+            {
+              usage: ".jump",
+              description: "Nhảy lên."
+            },
+            {
+              usage: ".hand | .hands | .handslot <1-8>",
+              description: "Chuyển hotbar được cầm."
+            },
+            {
+              usage: ".equip (Lỗi)",
+              description: "Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,..."
+            },
+            {
+              usage: ".unequip",
+              description: "Tháo item khỏi các vị trí: đầu, thân thể,..."
+            },
+            {
+              usage: ".afk",
+              description: "Tự động di chuyển để tránh bị kick ra khi không hoạt động."
+            },
+            {
+              usage: ".stopafk",
+              description: "Dừng chế độ tự động đi lại."
+            },
+            {
+              usage: ".eat (Lỗi)",
+              description: "Ăn thức ăn."
+            },
+            {
+              usage: ".guard (Chưa test)",
+              description: "Bảo vệ một khu vực (di chuyển và tấn công)."
+            },
+            {
+              usage: ".stopguard (Chưa test)",
+              description: "Dừng chế độ bảo vệ khu vực."
+            },
+            {
+              usage: ".mine (Chưa hoàn thiện)",
+              description: "Đào block."
+            },
+            {
+              usage: ".dropslot <slot> (1-44)",
+              description: "Vứt slot chỉ định trong inventory."
+            },
+            {
+              usage: ".dropall",
+              description: "Đang lỗi chưa tìm đc cách fix."
+            },
+            {
+              usage: ".disconnect",
+              description: "Cho bot rời server."
+            },
+            {
+              usage: ".reconnect",
+              description: "Cho bot vào lại server."
+            },
+            {
+              usage: ".exit | .quit | .leave",
+              description: "Cho bot rời server và thoát khỏi chương trình."
+            } 
+          ];
+          const ccreatives = [
+            {
+              usage: ".fly",
+              description: "Cho bot bay trong creative."
+            },
+            {
+              usage: ".stopfly",
+              description: "Cho bot không bay trong creative."
+            },
+            {
+              usage: ".setinvslot",
+              description: "Chx xg."
+            },
+            {
+              usage: ".clearslot <slot>",
+              description: "Xóa 1 ô đồ trong chế độ creative."
+            },
+            {
+              usage: ".clearinv | .clearinventory",
+              description: "Xóa 1 ô đồ trong chế độ creative."
+            }
+          ]
+          clientlog("\x1b[38;2;222;128;40mDanh sách lệnh của bot:\x1b[0m");
+          clientlog(`\x1b[38;2;252;196;40mGui command:\x1b[0m`)
+          cguis.forEach(cgui => {
+              clientlog(`\x1b[38;2;71;242;48m${cgui.usage}\x1b[0m - ${cgui.description}`);
           });
-        } else {
-          clientlog('Bot không có bất kỳ hiệu ứng nào');
-        }
-        break;
-    
-      case '.clear':
-        console.clear()
-        clientlog(`\x1b[38;2;45;255;25mSuccessful clear\x1b[0m`)
-        break;
-    
-      case '.inv':
-      case '.inventory':
-        const invitems = bot.inventory.items();
-        clientlog(`                     BOT INVENTORY                             `);
-        clientlog(`| Slot | Name                      | Count  | id_item                   |`);
-        clientlog(`|=======================================================================|`)
-        for (let i = 0; i < invitems.length; i++) {
-          const item = invitems[i];
-          clientlog(`| ${item.slot.toString().padEnd(4)} | ${item.displayName.padEnd(25)} | ${item.count.toString().padEnd(6)} | ${item.name.padEnd(25)} |`);
-        }
-        break;
-
-      case '.item':
-      case '.items':
-        for (const item of bot.inventory.items()) {
-          clientlog(`[Item] Slot ${item.slot.toString().padEnd(2)} : ${item.name} x ${item.count} ${JSON.stringify(item.enchants)}`);
-        }
-        break;
-
-      case '.nbtslot':
-        const nbtslot = arg[1];
-          if (nbtslot >= 0 && nbtslot < 45) {
-            if (bot.inventory.slots[nbtslot]) {
-              console.log(bot.inventory.slots[nbtslot]);
-            } else {
-              console.log(`This slot is empty`);
-            }
-          } else {
-            clientlog(`Invalid slot number. Use .nbtslot (0-44)`);
+          clientlog(`\x1b[38;2;252;196;40mChat command:\x1b[0m`)
+          cchats.forEach(cchat => {
+              clientlog(`\x1b[38;2;71;242;48m${cchat.usage}\x1b[0m - ${cchat.description}`);
+          });
+          clientlog(`\x1b[38;2;252;196;40mBot info command:\x1b[0m`)
+          cbotinfos.forEach(cbotinfo => {
+              clientlog(`\x1b[38;2;71;242;48m${cbotinfo.usage}\x1b[0m - ${cbotinfo.description}`);
+          });
+          clientlog(`\x1b[38;2;252;196;40mMoment command:\x1b[0m`)
+          cmoments.forEach(cmoment => {
+              clientlog(`\x1b[38;2;71;242;48m${cmoment.usage}\x1b[0m - ${cmoment.description}`);
+          });
+          clientlog(`\x1b[38;2;252;196;40mCreative command:\x1b[0m`)
+          ccreatives.forEach(ccreative => {
+              clientlog(`\x1b[38;2;71;242;48m${ccreative.usage}\x1b[0m - ${ccreative.description}`);
+          });
+          break;
+        
+        case '.chat':
+        case '.send':
+        case '.say':
+          if (!arg[1]) {
+            clientlog('Chat must be need arguments')
           }
-        break;
-
-      case '.nbtitems':
-        for (let nbt = 0; nbt < bot.inventory.slots.length; nbt++) {
-          if (bot.inventory.slots[nbt])
-            console.log(bot.inventory.slots[nbt])
+          bot.chat(arg[1].substring())
+          break;
+        
+        case '.cmd':
+        case '.command':
+          if (!arg[1]) {
+            clientlog('Command must be need arguments')
           }
+          bot.chat('/'+arg[1].substring())
+          break;
+        
+        case '.spam':
+          //beta
+          if (arg.length < 3) {
+            clientlog(`Usage: .spam <text> <delay> <time>`)
+            return
+          }
+          let text = arg[1];
+          let delay = parseInt(arg[2]) * 1000;
+          let time = parseInt(arg[3]) * 1000;
+        
+          console.log(`Bắt đầu spam tin nhắn "${text}" cách ${delay}ms`);
+          let intervalId = setInterval(() => {
+              bot.chat(text);
+          }, delay);
+
+          setTimeout(() => {
+              console.log('Kết thúc spam tin nhắn');
+              clearInterval(intervalId);
+          }, time + 1000);
+          break;  
+          
+        case '.fly':
+          if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
+          bot.creative.startFlying()
+          break;
+
+        case '.flyto':
+          if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
+          bot.creative.flyTo(destination)
+          break
+
+        case '.stopfly':
+          if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
+          bot.creative.stopFlying()
+          break;
+
+        case '.setinvslot': //unfinish
+        if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
+          bot.creative.setInventorySlot(slot, item)
+          break;
+
+        case '.clearslot':
+          if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
+          const cclearslot = arg[1]
+          bot.creative.clearSlot(cclearslot)
+          break;
+
+        case '.clearinv':
+        case '.clearinventory':
+          if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
+          bot.creative.clearInventory()
+          break;
+      
+        case '.coord':
+        case '.coordinates':
+          clientlog(`[Coordinates] ${bot.entity.position}`);
+          clientlog(`[World] ${bot.game.dimension}`);
+          break;
+
+        case '.info':
+          const worlds = bot.game.dimension
+          const world = worlds.split(':')
+          const worldname = world[1]
+          clientlog(`Health: ${bot.health} / Food: ${bot.food}`)
+          clientlog(`Oxygen: ${bot.oxygenLevel}`)
+          clientlog(`Coordinates: ${bot.entity.position} at ${worldname}`)
+          clientlog(`Spawn point: ${bot.spawnPoint}`)
+          clientlog(`Gamemode: ${bot.game.gameMode} (${bot.player.gamemode})`)
+          break;
+      
+        case '.clear':
+          console.clear()
+          clientlog(`\x1b[38;2;45;255;25mSuccessful clear\x1b[0m`)
         break;
       
-      case '.hand':
-      case '.hands':
-      case '.handslot':
-        if (!arg[1]) { clientlog('Change quickbar slot must be need a slot\nExample: .hand 3'); return }
-        if (arg[1] < 1 || arg[1] > 9) { clientlog('Slot available (1-9)'); return }
-          clientlog('Change hands to slot ' + arg[1])
-          let bquickbarchange = (arg[1] - 1)
-          bot.setQuickBarSlot(bquickbarchange)
-        break;
-      //equip need to fix
-      case '.equip':
-        if (arg.length < 3) {
-          console.log('Vui lòng cung cấp tên món đồ và vị trí muốn equip');
-          return;
-        }
-        const itemName = arg[1];
-        const destination = arg[2];
-
-        const item = bot.inventory.items().find(item => item.name === itemName);
-        if (!item) {
-          console.log(`Bot không có ${itemName} để equip`);
-          return;
-        }
-
-        switch (destination) {
-          case 'hand': {
-            const heldItem = bot.heldItem;
-            if (heldItem && heldItem.name === itemName) {
-              console.log(`${itemName} đã được giữ trong tay.`);
-              return;
+        case '.inv':
+        case '.inventory':
+          const invitems = bot.inventory.items();
+          clientlog(`                                   BOT INVENTORY                                       `)
+          clientlog(`| Slot | Slot Name    | Name                      | Count | id_item                   |`)
+          clientlog(`=======================================================================================`)
+          for (let i = 0; i < invitems.length; i++) {
+            const item = invitems[i];
+            let slotName = '';
+            if (item.slot >= 36 && item.slot <= 44) {
+              slotName = `Hotbar ${item.slot - 35}`;
+            } else if (item.slot === 45) {
+              slotName = 'Off Hand';
+            } else if (item.slot >= 9 && item.slot <= 35) {
+              slotName = `Container ${item.slot - 8}`;
+            } else {
+              slotName = `Slot ${item.slot}`;
             }
-            bot.equip(item, 'hand', (err) => {
-              if (err) {
-                console.log(`Không thể equip ${itemName} vào tay: ${err.message}`);
-              } else {
-                console.log(`Đã equip ${itemName} vào tay.`);
-              }
-            });
-            break;
+            clientlog(`| ${item.slot.toString().padEnd(4)} | ${slotName.padEnd(12)} | ${item.displayName.padEnd(25)} | ${item.count.toString().padEnd(2)}/${item.stackSize.toString().padEnd(2)} | ${item.name.padEnd(25)} |`);
           }
-          case 'head':
-          case 'torso':
-          case 'legs':
-          case 'feet': {
-            const armorSlot = bot.inventory.slots[bot.armorSlots[destination]];
-            if (armorSlot && armorSlot.name === itemName) {
-              console.log(`${itemName} đã được mặc trên ${destination}.`);
-              return;
+          break;
+
+        case '.itemslot':
+          const itemslot = arg[1];
+            if (itemslot >= 0 && itemslot < 45) {
+              if (bot.inventory.slots[itemslot]) {
+                const item = bot.inventory.slots[itemslot]
+                clientlog(`Slot: ${item.slot}`)
+                clientlog(`Name: ${item.displayName}`)
+                clientlog(`Id: ${item.name}`)
+                clientlog(`Count: ${item.count}`)
+                clientlog(`Stack size: ${item.stackSize}`)
+                clientlog(`Durability: ${item.durabilityUsed}`)
+                clientlog(`Enchants: ${JSON.stringify(item.enchants)}`)
+                clientlog(`Item type: ${item.type}`)
+                clientlog(`Custome name: ${item.customName}`)
+                clientlog(`Custome lore: ${item.customLore}`)
+                clientlog(`Meta data: ${item.metadata}`)
+                clientlog(`Repair cost: ${item.repairCost}`)
+              } else {
+                clientlog(`This slot is empty`);
+              }
+            } else {
+              clientlog(`Invalid slot number. Use .itemslot (0-44)`);
             }
-            bot.unequip(destination, (err) => {
-              if (err) {
-                console.log(`Không thể tháo ${destination} từ slot: ${err.message}`);
+          break;
+
+        case '.item':
+        case '.items':
+          clientlog(`All item in bot inventory:`)
+          for (const item of bot.inventory.items()) {
+            clientlog(`[Item] Slot ${item.slot.toString().padEnd(2)} : ${item.name} x ${item.count} Enchants:${JSON.stringify(item.enchants)}`); item.enchants
+          }
+          break;
+
+        case '.nbtslot':
+          const nbtslot = arg[1];
+            if (nbtslot >= 0 && nbtslot < 45) {
+              if (bot.inventory.slots[nbtslot]) {
+                console.log(bot.inventory.slots[nbtslot]);
+              } else {
+                clientlog(`This slot is empty`);
+              }
+            } else {
+              clientlog(`Invalid slot number. Use .nbtslot (0-44)`);
+            }
+          break;
+
+        case '.nbtitems':
+          console.log(bot.inventory.slots)
+          break;
+
+        case '.hand':
+        case '.hands':
+        case '.handslot':
+          if (!arg[1]) { clientlog(`Change quickbar slot must be need a slot`); clientlog(`Example: ${arg[0]} 3`); return }
+          if (arg[1] < 1 || arg[1] > 9) { clientlog('Slot available (1-9)'); return }
+            clientlog('Change hands to slot ' + arg[1])
+            let bquickbarchange = (arg[1] - 1)
+            bot.setQuickBarSlot(bquickbarchange)
+          break;
+        //equip need to fix
+        case '.equip':
+          if (arg.length < 3) {
+            clientlog('Vui lòng cung cấp tên món đồ và vị trí muốn equip');
+            return;
+          }
+          const itemName = arg[1];
+          const destination = arg[2];
+
+          const item = bot.inventory.items().find(item => item.name === itemName);
+          if (!item) {
+            clientlog(`Bot không có ${itemName} để equip`);
+            return;
+          }
+
+          switch (destination) {
+            case 'hand': {
+              const heldItem = bot.heldItem;
+              if (heldItem && heldItem.name === itemName) {
+                clientlog(`${itemName} đã được giữ trong tay.`);
                 return;
               }
-              bot.equip(item, destination, (err) => {
+              bot.equip(item, 'hand', (err) => {
                 if (err) {
-                  console.log(`Không thể equip ${itemName} vào ${destination}: ${err.message}`);
+                  clientlog(`Không thể equip ${itemName} vào tay: ${err.message}`);
                 } else {
-                  console.log(`Đã equip ${itemName} vào ${destination}.`);
+                  clientlog(`Đã equip ${itemName} vào tay.`);
                 }
               });
-            });
-            break;
+              break;
+            }
+            case 'head':
+            case 'torso':
+            case 'legs':
+            case 'feet': {
+              const armorSlot = bot.inventory.slots[bot.armorSlots[destination]];
+              if (armorSlot && armorSlot.name === itemName) {
+                clientlog(`${itemName} đã được mặc trên ${destination}.`);
+                return;
+              }
+              bot.unequip(destination, (err) => {
+                if (err) {
+                  clientlog(`Không thể tháo ${destination} từ slot: ${err.message}`);
+                  return;
+                }
+                bot.equip(item, destination, (err) => {
+                  if (err) {
+                    clientlog(`Không thể equip ${itemName} vào ${destination}: ${err.message}`);
+                  } else {
+                    clientlog(`Đã equip ${itemName} vào ${destination}.`);
+                  }
+                });
+              });
+              break;
+            }
+            default:
+              clientlog(`Vị trí muốn equip không hợp lệ.`);
           }
-          default:
-            console.log(`Vị trí muốn equip không hợp lệ.`);
-        }
-        break;
+          break;
 
 
-      case '.unequip':
-        if (!(arg[1] == 'head' || arg[1] == 'torso' || arg[1] == 'legs' || arg[1] == 'feet' || arg[1] == 'off-hand')) {
-          clientlog(`Unequip available ( head | torso | legs | feet | off-hand )`)
-        } else {
-          clientlog(`Unequip ${arg[1]}`)
-          bot.unequip(arg[1])
-        }
-        break;
+        case '.unequip':
+          if (!(arg[1] == 'head' || arg[1] == 'torso' || arg[1] == 'legs' || arg[1] == 'feet' || arg[1] == 'off-hand')) {
+            clientlog(`Unequip available ( head | torso | legs | feet | off-hand )`)
+          } else {
+            clientlog(`Unequip ${arg[1]}`)
+            bot.unequip(arg[1])
+          }
+          break;
 
-      case '.webinv':
-      case '.showinv':
-      case '.invsee':
-        const invslot = path.join(__dirname, 'invslot.png');
-        clientlog("Open web inventory in http://localhost:"+ invoptions.port)
-        clientlog(`Open invslot`)
-        opn("http://localhost:"+ invoptions.port)
-        opn(invslot)
-        break;
+        case '.webinv':
+        case '.showinv':
+        case '.invsee':
+          const invslot = path.join(__dirname, 'invslot.png');
+          clientlog("Open web inventory in http://localhost:"+ invoptions.port)
+          clientlog(`Open invslot`)
+          opn("http://localhost:"+ invoptions.port)
+          opn(invslot)
+          break;
 
         case '.dropslot':
           let slot = arg[1]
@@ -410,296 +555,371 @@ rl.on('line', (command) => {
           let dropslot = bot.inventory.slots[slot]
           if (dropslot && dropslot.type !== -1) {
             bot.tossStack(dropslot)
-            clientlog(`Drop slot ${slot}`)
+              clientlog(`Drop slot ${slot}`)
           } else {
             clientlog(`Slot ${slot} is empty or invalid`)
           }
           break;
 
-      case '.dropall':
-        const items = bot.inventory.items()
-        bot.tossStack(items)
-        break;
-
-      case '.idslot':
-        const idslot = path.join(__dirname, 'invslot.png');
-        opn (idslot)
-        break;
-      
-      case '.fight':
-        let target = null
-        if (!arg[1]) {
-          if (username == console) { clientlog(username, 'Can\'t fight with Console'); return }
-          target = bot.players[username].entity
-        } else {
-          target = bot.players[arg[1]].entity
-        }
-
-        if (!target) { clientlog(username, 'Can\'t see' + target?.username); return }
-          clientlog('Start PVP with ' + target.username)
-          followattack(target)
-          bot.pvp.attack(target)
-
-        setTimeout(() => {
-          const sword = bot.inventory.items().find(item => item.name.includes('sword'))
-          if (sword) bot.equip(sword, 'hand')
-        }, 250)
-        break;
-      
-      case '.stopfight':
-        stopfollowattack()
-        bot.pvp.stop()
-        break;
-
-      case '.server':
-        clientlog(`IP: ${options.host}:${options.port}`)
-        clientlog(`Ver: ${options.version}`)
-        clientlog(`TPS: ${bot.getTps()}`)
-        clientlog(`Difficulty: ${bot.game.difficulty}`)
-        clientlog(`Hardcore: ${bot.game.hardcore}`)
-        break;
-
-      case '.tps':
-        clientlog('Server tps: ' + bot.getTps())
-        break;
-    
-      case '.player':
-      case '.players':
-        const players = Object.keys(bot.players).map((name) => `\x1b[32m${name}(${bot.players[name].ping}ms)\x1b[0m`).join(' | ');
-        clientlog(`[Player List] ${players}`);
-        break;
-        
-      case '.playerinfo':
-        if (arg.length < 2) {
-          clientlog('[Player Info] .playerinfo <player>\n[Player Info] Example: .playerinfo bot');
-        } else {
-          const target = arg[1];
-          if (!bot.players[target]) {
-            clientlog(`[Player Info] ${target} is not on the server`);
-          } else {
-            const playerinfo = `\x1b[32m${target}(${bot.players[target]?.ping}ms)\x1b[0m UUID: ${bot.players[target]?.uuid}`;
-            clientlog(`[Player Info] ${playerinfo}`);
+        case '.dropall':
+          tossInventory(bot)
+          async function tossInventory(bot) {
+            const items = bot.inventory.items()
+            
+            for (const item of items) {
+              await bot.tossStack(item)
+            }
           }
-        }
-        break;
-      
-      
-      case '.sneak':
-        bot.setControlState('sneak', true);
-        clientlog(`${bot.username} start sneak`);
-        break;
-      
-      case '.unsneak':
-        bot.setControlState('sneak', false);
-        clientlog(`${bot.username} stop sneak`);
-        break;
-      
-      case '.jump':
-        bot.setControlState('jump', true);
-        setTimeout(() => {bot.setControlState('jump', false)}, 500);
-        clientlog(`[Bot] ${bot.username} jump`);
-        break;
-      
-      case '.goto':
-        goto();
-        break;
-      
-      case '.follow':
-        followplayer();
-        break;
-      
-      case '.unfollow':
-        unfollowPlayer();
-        break;
-      
-      case '.afk':
-        clientlog('[AFK] Starting anti-afk');
-        isAFK = true;
-        startAFK();
-        break;
-      
-      case '.stopafk':
-        clientlog('[AFK] Stop anti-afk');
-        isAFK = false;
-        clearTimeout(afktimer);
-        break;
-      
-      case ".eat":
-        const eatitem = arg[0]
-        if (!eatitem) {
-          clientlog("Please specify an item to eat.");
           break;
-        }
-        const inventory = getInventory(arg[1].id);
-        if (!inventory.includes(eatitem)) {
-          clientlog(`You don't have ${eatitem} in your inventory.`);
+
+        case '.idslot':
+          const idslot = path.join(__dirname, 'invslot.png');
+          opn(idslot)
           break;
-        }
-        removeeatitemFromInventory(arg[1].id, eatitem);
-        increaseHealth(arg[1].id, 10);
-        clientlog(`You ate ${eatitem} and gained 10 health.`);
-        break;
+        
+        case '.fight':
+          let target = null
+          if (!arg[1]) {
+            if (username == console) { clientlog(username, 'Can\'t fight with Console'); return }
+            target = bot.players[username].entity
+          } else {
+            target = bot.players[arg[1]].entity
+          }
 
-      case '.guard':
-        if (!arg[1]) return 
-        const username = arg[1]
-        if (!username) {
-          clientlog(`I don't see a player`)
-        }
-        const position = bot.players[username].position
-        guardArea(position)
-        break;
+          if (!target) { clientlog(username, 'Can\'t see' + target?.username); return }
+            clientlog('Start PVP with ' + target.username)
+            followattack(target)
+            bot.pvp.attack(target)
 
-      case '.stopguard':
-        clientlog('Stop guarding...')
-        stopGuarding
-        break;
+          setTimeout(() => {
+            const sword = bot.inventory.items().find(item => item.name.includes('sword'))
+            if (sword) bot.equip(sword, 'hand')
+          }, 250)
+          break;
+        
+        case '.stopfight':
+          stopfollowattack()
+          bot.pvp.stop()
+          break;
+
+        case '.server':
+          clientlog(`IP: ${options.host}:${options.port}`)
+          clientlog(`Ver: ${options.version}`)
+          clientlog(`TPS: ${bot.getTps()}`)
+          clientlog(`Difficulty: ${bot.game.difficulty}`)
+          clientlog(`Hardcore: ${bot.game.hardcore}`)
+          clientlog(`Maxplayer: ${bot.game.maxPlayers}`)
+          clientlog(`World tpye: ${bot.game.levelType}`)
+          break;
+
+        case '.tps':
+          clientlog('Server tps: ' + bot.getTps())
+          break;
       
-      case '.meslog':
-        const logs = arg[1]
-        if (logs === 'mes') {
-          logmes('mes')
-        } else if (logs === 'chat') {
-          logmes('chat')
-        } else if (logs === 'off') {
-          logmes('off')
-        } else {
-          clientlog(`Unknown logs: ${logs}`)
-        }
-        break;
+        case '.player':
+        case '.players':
+          const players = Object.keys(bot.players).map((name) => `\x1b[32m${name}(${bot.players[name].ping}ms)\x1b[0m`).join(' | ');
+          clientlog(`[Player List] ${players}`);
+          break;
+        case '.playerinfo':
+          if (arg.length < 2) {
+            clientlog('[Player Info] .playerinfo <player>\n[Player Info] Example: .playerinfo bot');
+          } else {
+            const target = arg[1];
+            if (!bot.players[target]) {
+              clientlog(`[Player Info] ${target} is not on the server`);
+            } else {
+              const playerinfo = `\x1b[32m${target}(${bot.players[target]?.ping}ms)\x1b[0m UUID: ${bot.players[target]?.uuid}`;
+              clientlog(`[Player Info] ${playerinfo}`);
+            }
+          }
+          break;
+        
+        case '.sneak':
+          bot.setControlState('sneak', true);
+          clientlog(`${bot.username} start sneak`);
+          break;
+        
+        case '.unsneak':
+          bot.setControlState('sneak', false);
+          clientlog(`${bot.username} stop sneak`);
+          break;
+        
+        case '.jump':
+          bot.setControlState('jump', true);
+          setTimeout(() => {bot.setControlState('jump', false)}, 500);
+          clientlog(`[Bot] ${bot.username} jump`);
+          break;
 
-      case '.mine':
-        mineblock()
-        break;
+        case '.lookat':
+          let targetPos;
+          if (arg.length === 2) {
+            // Nếu người chơi nhập tọa độ, sử dụng nó
+            const [x, y, z] = arg[1].split(',');
+            targetPos = new Vec3(parseFloat(x), parseFloat(y), parseFloat(z));
+          } else if (arg.length === 3) {
+            // Nếu người chơi nhập tên người chơi, sử dụng tọa độ của người chơi
+            const targetPlayer = arg[1];
+            const player = bot.players[targetPlayer];
+            if (!player) {
+              clientlog(`Không tìm thấy người chơi '${targetPlayer}'`);
+              return;
+            }
+            targetPos = player.entity.position;
+          } else {
+            clientlog(`Usage: .lookat <x,y,z> | <player>`);
+            return;
+          }
+        
+          bot.lookAt(targetPos);
+          clientlog(`Đang nhìn về phía ${targetPos}`);
+          break;
 
-      case '.disconnect':
-        bot.quit()
-        clientlog(`${options.username} left ${options.host}:${options.port}`)
-        break;
+        case '.look':
+          const yaw = arg[1]
+          const pitch = arg[2]
+          if (arg.length < 2 ) {
+            clientlog(`Usage: .look <yaw> <pitch>`);
+            return;
+          }
+          bot.look(yaw, pitch, [force])
+          clientlog(`Đang nhìn về hướng ${yaw} ${pitch}`)
+          break
+        
+        case '.goto':
+          goto();
+          break;
 
-      case '.reconnect':
-        mineflayer.createBot(options)
-        break;
+        case '.stopgoto':
+          bot.pathfinder.setGoal(null);
+          clientlog(`Stopped goto`);
+          break;
+        
+        case '.follow':
+          followplayer();
+          break;
+        
+        case '.unfollow':
+          unfollowPlayer();
+          break;
+        
+        case '.afk':
+          clientlog('[AFK] Starting anti-afk');
+          isAFK = true;
+          startAFK();
+          break;
+        
+        case '.stopafk':
+          clientlog('[AFK] Stop anti-afk');
+          isAFK = false;
+          clearTimeout(afktimer);
+          break;
+        
+        case '.eat':
+          eatfood()
+          break;
 
-      case '.exit':
-      case '.leave':
-      case '.quit':
-        clientlog(`${options.username} left ${options.host}:${options.port}`);
-        process.exit();
-        break;
+        case '.guard':
+          const guardpos = bot.entity.position
+          guardArea(guardposition)
+          break;
 
-      default:
-        clientlog(`Unknown command: "${cmd}". Type ".help" for a list of commands.`);
-    }
-  } else {
-    bot.chat(command);
-  }
+        case '.stopguard':
+          clientlog('Stop guarding...')
+          stopGuarding
+          break;
+        
+        case '.meslog':
+          if (!arg[1]) clientlog(`Usage '.meslog + off / mes / chat / all'`)
+          const logs = arg[1]
+          if (logs === 'all') {
+            logmes('all')
+          } else if (logs === 'mes') {
+            logmes('mes')
+          } else if (logs === 'chat') {
+            logmes('chat')
+          } else if (logs === 'off') {
+            logmes('off')
+          } else {
+            clientlog(`Unknown logs: ${logs}`)
+          }
+          break;
 
-  function mineblock() {
-    clientlog('Chx xong')
-  }
+        case '.mine':
+          mineblock()
+          break;
 
-  function goto () {
-    if (arg.length < 2 ) {
-      clientlog(`Usage: ${cmd} <x> <y> <z> or <player>`);
-      return;
-    }
-    const x = parseFloat(arg[1]);
-    const y = parseFloat(arg[2]);
-    const z = parseFloat(arg[3]);
-  
-    if (isNaN(x) || isNaN(y) || isNaN(z)) {
-      const targetPlayer = bot.players[arg[1]];
-  
-      if (targetPlayer) {
-        const position = targetPlayer.entity.position;
-  
-        clientlog(`Going to ${arg[1]}'s position: ${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`);
-        bot.pathfinder.setGoal(new GoalNear(position.x, position.y, position.z, 0));
-      } else {
-        clientlog(`Can't find player: ${arg[1]}`);
+        case '.disconnect':
+          bot.quit()
+          clientlog(`${options.username} left ${options.host}:${options.port}`)
+          break;
+
+        case '.reconnect':
+          createbot()
+          break;
+
+        case '.exit':
+        case '.leave':
+        case '.quit':
+          clientlog(`${options.username} left ${options.host}:${options.port}`);
+          process.exit();
+          break;
+
+        default:
+          let newcmd = cmd.substring(1)
+          clientlog(`Unknown command: "${newcmd}". Type ".help" for a list of commands.`);
       }
     } else {
-      clientlog(`Going to coordinates: ${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}`);
-      bot.pathfinder.setGoal(new GoalNear(x, y, z, 0));
-    }
-  }
-
-  function followplayer() {
-    if (!arg[1]) {
-      clientlog('Usage: .follow <player>');
-      return;
+      bot.chat(command);
     }
 
-    let followplayer = bot.players[arg[1]].entity;
-  
-    if (!followplayer) {
-      clientlog(`Can't find player: ${arg[1]}`);
-      return;
+    function mineblock() {
+      clientlog('Chx xong')
     }
-
-    bot.pathfinder.setGoal(new GoalFollow(followplayer, 1), true)
-
-    clientlog(`Following ${arg[1]}`);
-  }
-  
-  function unfollowPlayer() {
-    bot.pathfinder.setGoal(null);
-    clientlog(`Stopped following player`);
-  }
-
-  function startAFK() {
-    if (!isAFK) return;
-  
-    const mcData = require('minecraft-data')(bot.version);
-    let state = true;
     
-    afktimer = setTimeout(() => {
-      if (!state) {
-        bot.setControlState('jump', true);
-        state = true;
-      } else {
-        const direction = Math.floor(Math.random() * 5);
-        switch (direction) {
-          case 0:
-            bot.setControlState('forward', true);
-            break;
-          case 1:
-            bot.setControlState('back', true);
-            break;
-          case 2:
-            bot.setControlState('left', true);
-            break;
-          case 3:
-            bot.setControlState('right', true);
-            break;
-          case 4:
-            bot.setControlState('jump', true);
-            setTimeout(() => bot.setControlState('jump', false), 250);
-            break;
-        }
-        state = false;
+    function goto() {
+      if (arg.length < 2 ) {
+        clientlog(`Usage: ${cmd} <x> <y> <z> or <player>`);
+        return;
       }
+      const x = parseFloat(arg[1]);
+      const y = parseFloat(arg[2]);
+      const z = parseFloat(arg[3]);
+    
+      if (isNaN(x) || isNaN(y) || isNaN(z)) {
+        const targetPlayer = bot.players[arg[1]];
+    
+        if (targetPlayer) {
+          const position = targetPlayer.entity.position;
+    
+          clientlog(`Going to ${arg[1]}'s position: ${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`);
+          bot.pathfinder.setGoal(new GoalNear(position.x, position.y, position.z, 0));
+        } else {
+          clientlog(`Can't find player: ${arg[1]}`);
+        }
+      } else {
+        clientlog(`Going to coordinates: ${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}`);
+        bot.pathfinder.setGoal(new GoalNear(x, y, z, 0));
+      }
+    }
+    
+    function followplayer() {
+      if (!arg[1]) {
+        clientlog('Usage: .follow <player>');
+        return;
+      }
+    
+      let followplayer = bot.players[arg[1]].entity;
+    
+      if (!followplayer) {
+        clientlog(`Can't find player: ${arg[1]}`);
+        return;
+      }
+    
+      bot.pathfinder.setGoal(new GoalFollow(followplayer, 1), true)
+    
+      clientlog(`Following ${arg[1]}`);
+    }
+    
+    function unfollowPlayer() {
+      bot.pathfinder.setGoal(null);
+      clientlog(`Stopped following player`);
+    }
+    
+    function startAFK() {
+      if (!isAFK) return;
+    
+      const mcData = require('minecraft-data')(bot.version);
+      let state = true;
       
-      startAFK();
-    }, 5000);
-  }
+      afktimer = setTimeout(() => {
+        if (!state) {
+          bot.setControlState('jump', true);
+          state = true;
+        } else {
+          const direction = Math.floor(Math.random() * 5);
+          switch (direction) {
+            case 0:
+              bot.setControlState('forward', true);
+              break;
+            case 1:
+              bot.setControlState('back', true);
+              break;
+            case 2:
+              bot.setControlState('left', true);
+              break;
+            case 3:
+              bot.setControlState('right', true);
+              break;
+            case 4:
+              bot.setControlState('jump', true);
+              setTimeout(() => bot.setControlState('jump', false), 250);
+              break;
+          }
+          state = false;
+        }
+        
+        startAFK();
+      }, 5000);
+    }
+    
+    function guardArea (pos) {
+      guardPos = pos
+      if (!bot.pvp.target) {
+        moveToGuardPos()
+      }
+    }
+    
+    function stopGuarding () {
+      guardPos = null
+      bot.pvp.stop()
+      bot.pathfinder.setGoal(null)
+    }
+    
+    function moveToGuardPos () {
+      bot.pathfinder.setMovements(new Movements(bot))
+      bot.pathfinder.setGoal(new GoalBlock(guardPos.x, guardPos.y, guardPos.z))
+    }
+    
+    function eatfood() {  
+      bot.consume()
+    }
+    
+    function followattack(player) {
+      if (player == bot.player) { return }
+      clientlog('Following ' + player.username + ' to attack')
+      bot.pathfinder.setGoal(new GoalFollow(player, 2), true)
+    }
+    
+    function stopfollowattack() {
+      bot.pathfinder.setGoal(null);
+      clientlog(`Stopped fight player`);
+    }
+  })
 
   function logmes (mode) {
     const logmode = mode
-    if (logmode === 'mes') {
-      clientlog('Show message')
+    if (logmode === 'all') {
+      clientlog('Show all')
       bot.removeAllListeners('message')
       bot.removeAllListeners('chat')
       bot.on('message', (message) =>{
-        console.log(message.toAnsi())
+        clientlog(message.toAnsi())
       })
+    } else if (logmode === 'mes') {
+      clientlog('Show message')
+      bot.removeAllListeners('message')
+      bot.removeAllListeners('chat')
+      bot.on('message', (message, position) => {
+        if (position === 'game_info') return
+        clientlog(message.toAnsi())
+    })
     } else if (logmode === 'chat') {
       clientlog('Show chat')
       bot.removeAllListeners('message')
       bot.removeAllListeners('chat')
       bot.on('chat', (username, message) => {
-        console.log(`<${username}> ${message}`)
+        clientlog(`<${username}> ${message}`)
       })
     } else if (logmode === 'off') {
       clientlog('Message logged off')
@@ -708,52 +928,11 @@ rl.on('line', (command) => {
     }
   }
 
-  function guardArea (pos) {
-    guardPos = pos
-  
-    // We we are not currently in combat, move to the guard pos
-    if (!bot.pvp.target) {
-      moveToGuardPos()
-    }
-  }
-  
-  // Cancel all pathfinder and combat
-  function stopGuarding () {
-    guardPos = null
-    bot.pvp.stop()
-    bot.pathfinder.setGoal(null)
+  function clientlog(log) {
+    const time = new Date().toLocaleTimeString()
+    console.log(`[${time}] \x1b[38;2;72;250;235m[Q]\x1b[0m ${log}`)
   }
 
-  function moveToGuardPos () {
-    bot.pathfinder.setMovements(new Movements(bot))
-    bot.pathfinder.setGoal(new GoalBlock(guardPos.x, guardPos.y, guardPos.z))
-  }
-
-  function followattack(player) {
-    if (player == bot.player) { return }
-    clientlog('Following ' + player.username + ' to attack')
-    bot.pathfinder.setGoal(new GoalFollow(player, 2), true)
-  }
-
-  function stopfollowattack() {
-    bot.pathfinder.setGoal(null);
-    clientlog(`Stopped fight player`);
-  }
-})
-
-function clientlog(log) {
-  console.log(`\x1b[38;2;72;250;235m[Q]\x1b[0m ${log}`)
+  bot.on('kicked', console.log)
+  bot.on('error', console.log)
 }
-
-bot.on('autoeat_started', (item, offhand) => {
-  console.log(`Eating ${item.name} in ${offhand ? 'offhand' : 'hand'}`)
-})
-
-bot.on('autoeat_finished', (item, offhand) => {
-  console.log(`Finished eating ${item.name} in ${offhand ? 'offhand' : 'hand'}`)
-})
-
-bot.on('autoeat_error', console.error)
-
-bot.on('kicked', console.log)
-bot.on('error', console.log)
