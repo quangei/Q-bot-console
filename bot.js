@@ -5,6 +5,7 @@ const pvp = require('mineflayer-pvp').plugin
 const tpsPlugin = require('mineflayer-tps')(mineflayer)
 const armorManager = require('mineflayer-armor-manager')
 const collectBlock = require('mineflayer-collectblock').plugin
+const autoeat = require('mineflayer-auto-eat').plugin
 
 const rlsync = require('readline-sync')
 let bacctype = rlsync.question(`Auth: `)
@@ -72,6 +73,7 @@ function createbot() {
   bot.loadPlugin(tpsPlugin)
   bot.loadPlugin(armorManager)
   bot.loadPlugin(collectBlock)
+  bot.loadPlugin(autoeat)
 
   bot.armorManager.equipAll()
 
@@ -92,7 +94,7 @@ function createbot() {
               description: "Hiển thị danh sách lệnh"
             },
             {
-              usage: ".clear",
+              usage: ".clear || .cls",
               description: "Xóa màn hình console."
             },
             {
@@ -121,7 +123,7 @@ function createbot() {
             },
             {
               usage: ".inv | .inventory",
-              description: "Hiển thị iventory trong túi đồ của bot."
+              description: "Hiển thị toàn bộ đồ của bot."
             },
             {
               usage: ".item | .items",
@@ -158,6 +160,10 @@ function createbot() {
             {
               usage: ".idslot",
               description: "Hiển thị slot id."
+            },
+            {
+              usage: ".itemslot <slot>",
+              description: "Hiển thị thông tin slot."
             },
           ];
           const cmoments = [
@@ -198,7 +204,7 @@ function createbot() {
               description: "Chuyển hotbar được cầm."
             },
             {
-              usage: ".equip (Lỗi)",
+              usage: ".equip",
               description: "Equip item trong túi đồ vào các vị trí như tay, đầu, thân thể,..."
             },
             {
@@ -215,7 +221,11 @@ function createbot() {
             },
             {
               usage: ".eat (Lỗi)",
-              description: "Ăn thức ăn."
+              description: "Cho bot tự ăn thức ăn."
+            },
+            {
+              usage: ".stopeat (Lỗi)",
+              description: "Dừng cho bot tự ăn thức ăn."
             },
             {
               usage: ".guard (Chưa test)",
@@ -311,7 +321,7 @@ function createbot() {
           }
           bot.chat('/'+arg[1].substring())
           break;
-        
+
         case '.spam':
           //beta
           if (arg.length < 3) {
@@ -383,30 +393,60 @@ function createbot() {
           break;
       
         case '.clear':
+        case '.cls':
           console.clear()
           clientlog(`\x1b[38;2;45;255;25mSuccessful clear\x1b[0m`)
         break;
-      
+
         case '.inv':
         case '.inventory':
-          const invitems = bot.inventory.items();
           clientlog(`                                   BOT INVENTORY                                       `)
           clientlog(`| Slot | Slot Name    | Name                      | Count | id_item                   |`)
           clientlog(`=======================================================================================`)
-          for (let i = 0; i < invitems.length; i++) {
-            const item = invitems[i];
-            let slotName = '';
-            if (item.slot >= 36 && item.slot <= 44) {
-              slotName = `Hotbar ${item.slot - 35}`;
-            } else if (item.slot === 45) {
-              slotName = 'Off Hand';
-            } else if (item.slot >= 9 && item.slot <= 35) {
-              slotName = `Container ${item.slot - 8}`;
+          const slots = bot.inventory.slots;
+          slots.forEach((item, index) => {
+            if (item) {
+              let slotName = '';
+              if (item.slot >= 36 && item.slot <= 44) {
+                slotName = `Hotbar ${item.slot - 35}`;
+              } else if (item.slot === 45) {
+                slotName = 'Off Hand';
+              }else if (item.slot === 5) {
+                slotName = 'Helmet';
+              }else if (item.slot === 6) {
+                slotName = 'Chestplate';
+              }else if (item.slot === 7) {
+                slotName = 'Leggings';
+              }else if (item.slot === 8) {
+                slotName = 'Boots';
+              } else if (item.slot >= 9 && item.slot <= 35) {
+                slotName = `Container ${item.slot - 8}`;
+              } else {
+                slotName = `Slot ${item.slot}`;
+              }
+              clientlog(`| ${item.slot.toString().padEnd(4)} | ${slotName.padEnd(12)} | ${item.displayName.padEnd(25)} | ${item.count.toString().padEnd(2)}/${item.stackSize.toString().padEnd(2)} | ${item.name.padEnd(25)} |`);
             } else {
-              slotName = `Slot ${item.slot}`;
+              let slotName = '';
+              if (index >= 36 && index <= 44) {
+                slotName = `Hotbar ${index - 35}`;
+              } else if (index === 45) {
+                slotName = 'Off Hand';
+              }else if (index === 5) {
+                slotName = 'Helmet';
+              }else if (index === 6) {
+                slotName = 'Chestplate';
+              }else if (index === 7) {
+                slotName = 'Leggings';
+              }else if (index === 8) {
+                slotName = 'Boots';
+              } else if (index >= 9 && index <= 35) {
+                slotName = `Container ${index - 8}`;
+              } else {
+                slotName = `Slot ${index}`;
+              }
+              clientlog(`| ${index.toString().padEnd(4)} | ${slotName.padEnd(12)} | Empty                     | null  | empty                     |`);
             }
-            clientlog(`| ${item.slot.toString().padEnd(4)} | ${slotName.padEnd(12)} | ${item.displayName.padEnd(25)} | ${item.count.toString().padEnd(2)}/${item.stackSize.toString().padEnd(2)} | ${item.name.padEnd(25)} |`);
-          }
+          });
           break;
 
         case '.itemslot':
@@ -468,73 +508,30 @@ function createbot() {
             let bquickbarchange = (arg[1] - 1)
             bot.setQuickBarSlot(bquickbarchange)
           break;
-        //equip need to fix
+          
         case '.equip':
-          if (arg.length < 3) {
-            clientlog('Vui lòng cung cấp tên món đồ và vị trí muốn equip');
-            return;
-          }
-          const itemName = arg[1];
-          const destination = arg[2];
-
-          const item = bot.inventory.items().find(item => item.name === itemName);
-          if (!item) {
-            clientlog(`Bot không có ${itemName} để equip`);
-            return;
-          }
-
-          switch (destination) {
-            case 'hand': {
-              const heldItem = bot.heldItem;
-              if (heldItem && heldItem.name === itemName) {
-                clientlog(`${itemName} đã được giữ trong tay.`);
-                return;
-              }
-              bot.equip(item, 'hand', (err) => {
-                if (err) {
-                  clientlog(`Không thể equip ${itemName} vào tay: ${err.message}`);
-                } else {
-                  clientlog(`Đã equip ${itemName} vào tay.`);
-                }
-              });
-              break;
-            }
-            case 'head':
-            case 'torso':
-            case 'legs':
-            case 'feet': {
-              const armorSlot = bot.inventory.slots[bot.armorSlots[destination]];
-              if (armorSlot && armorSlot.name === itemName) {
-                clientlog(`${itemName} đã được mặc trên ${destination}.`);
-                return;
-              }
-              bot.unequip(destination, (err) => {
-                if (err) {
-                  clientlog(`Không thể tháo ${destination} từ slot: ${err.message}`);
-                  return;
-                }
-                bot.equip(item, destination, (err) => {
-                  if (err) {
-                    clientlog(`Không thể equip ${itemName} vào ${destination}: ${err.message}`);
-                  } else {
-                    clientlog(`Đã equip ${itemName} vào ${destination}.`);
-                  }
-                });
-              });
-              break;
-            }
-            default:
-              clientlog(`Vị trí muốn equip không hợp lệ.`);
-          }
+          bot.armorManager.equipAll()
           break;
 
 
         case '.unequip':
-          if (!(arg[1] == 'head' || arg[1] == 'torso' || arg[1] == 'legs' || arg[1] == 'feet' || arg[1] == 'off-hand')) {
-            clientlog(`Unequip available ( head | torso | legs | feet | off-hand )`)
+          if (arg[1] == 'head' || arg[1] == 'torso' || arg[1] == 'legs' || arg[1] == 'feet' || arg[1] == 'off-hand' || arg[1] == 'all') {
+            if (arg[1] !== 'all') {
+              clientlog(`Unequip ${arg[1]}`)
+              bot.unequip(arg[1])
+            } else if (arg[1] = 'all') {
+              unequipall()
+            }
           } else {
-            clientlog(`Unequip ${arg[1]}`)
-            bot.unequip(arg[1])
+            clientlog(`Unequip available ( head | torso | legs | feet | off-hand | all)`)
+          }
+          async function unequipall() {
+            await bot.unequip('head')
+            await bot.unequip('torso')
+            await bot.unequip('legs')
+            await bot.unequip('feet')
+            await bot.unequip('off-hand')
+            await clientlog(`Unequip all`)
           }
           break;
 
@@ -716,7 +713,13 @@ function createbot() {
           break;
         
         case '.eat':
-          eatfood()
+          clientlog(`Enable auto-eat`)
+          bot.autoEat.enable()
+          break;
+
+        case '.stopeat':
+          clientlog(`Disable auto-eat`)
+          bot.autoEat.disable()
           break;
 
         case '.guard':
@@ -881,10 +884,6 @@ function createbot() {
       bot.pathfinder.setGoal(new GoalBlock(guardPos.x, guardPos.y, guardPos.z))
     }
     
-    function eatfood() {  
-      bot.consume()
-    }
-    
     function followattack(player) {
       if (player == bot.player) { return }
       clientlog('Following ' + player.username + ' to attack')
@@ -930,8 +929,11 @@ function createbot() {
 
   function clientlog(log) {
     const time = new Date().toLocaleTimeString()
-    console.log(`[${time}] \x1b[38;2;72;250;235m[Q]\x1b[0m ${log}`)
+    console.log(`\r [${time}] \x1b[38;2;72;250;235m[Q]\x1b[0m ${log}`)
+    rl.prompt(true)
+    
   }
+  
 
   bot.on('kicked', console.log)
   bot.on('error', console.log)
