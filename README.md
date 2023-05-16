@@ -13,8 +13,27 @@ This program use mineflayer and mineflayer-plugins
 - Use `node bot.js`
 - Or you can download .exe
 
+# Node packages
+
+| Name | Link |
+|-------------|:-----:|
+| mineflayer | [mineflayer](https://github.com/PrismarineJS/mineflayer) |
+| mineflayer-web-inventory | [mineflayer-web-inventory](https://github.com/imharvol/mineflayer-web-inventory) |
+| mineflayer-auto-eat | [mineflayer-auto-eat](https://github.com/link-discord/mineflayer-auto-eat) |
+| mineflayer-pvp | [mineflayer-pvp](https://github.com/PrismarineJS/mineflayer-pvp) |
+| mineflayer-pathfinder | [mineflayer-pathfinder](https://github.com/PrismarineJS/mineflayer-pathfinder) |
+| mineflayer-armor-manager | [mineflayer-armor-manager](https://github.com/PrismarineJS/MineflayerArmorManager) |
+| mineflayer-collectblock | [mineflayer-collectblock](https://github.com/PrismarineJS/mineflayer-collectblock) |
+| mineflayer-tool | [mineflayer-tool](https://github.com/PrismarineJS/mineflayer-tool) |
+| mineflayer-tps | [mineflayer-tps](https://github.com/Beaness/mineflayer-tps) |
+| opn | [opn](https://www.npmjs.com/package/opn) |
+| readline | [readline](https://www.npmjs.com/package/readline) |
+| readline-sync | [readline-sync](https://www.npmjs.com/package/readline-sync) |
+
+# Update
+
 # Command list:
- - Gui command:
+## Gui command:
  - .help - Hiển thị danh sách lệnh
  - .clear - Xóa màn hình console.
  - .meslog - Lọc tin nhắn và chat.
@@ -22,7 +41,7 @@ This program use mineflayer and mineflayer-plugins
  - .chat | .send | .say <message> - Gửi tin nhắn đến máy chủ
  - .cmd | .command <command> - Gửi lệnh đến máy chủ mà không cần /
  - .spam <mes> <delay> <time> (BETA) - Spam gì đó vào đến máy chủ
- - Bot info command:
+## Bot info command:
  - .coord | .coordinates - Gửi tin nhắn đến máy chủ
  - .inv | .inventory - Hiển thị iventory trong túi đồ của bot.
  - .item | .items - Hiển thị item trong túi đồ của bot.
@@ -34,7 +53,7 @@ This program use mineflayer and mineflayer-plugins
  - .nbtitems - Hiển thị thông tin chi tiết của toàn bộ item trong inventory.
  - .nbtslot <slot> (1-44) - .Hiển thị thông tin chi tiết của slot chỉ định trong inventory.
  - .idslot - Hiển thị slot id.
- - Moment command:
+## Moment command:
  - .goto <player> <postion> - Di chuyển đến vị trí hoặc người chơi được chỉ định.
  - .stopgoto - undefined
  - .follow <player> - Đi theo một người chơi khác trên máy chủ.
@@ -57,24 +76,9 @@ This program use mineflayer and mineflayer-plugins
  - .disconnect - Cho bot rời server.
  - .reconnect - Cho bot vào lại server.
  - .exit | .quit | .leave - Cho bot rời server và thoát khỏi chương trình.
- - Creative command:
+## Creative command:
  - .fly - Cho bot bay trong creative.
  - .stopfly - Cho bot không bay trong creative.
  - .setinvslot - Chx xg.
  - .clearslot <slot> - Xóa 1 ô đồ trong chế độ creative.
  - .clearinv | .clearinventory - Xóa 1 ô đồ trong chế độ creative.
- 
-| Node packages |
-|:------------|
-| mineflayer |
-| mineflayer-web-inventory |
-| mineflayer-pvp |
-| mineflayer-pathfinder |
-| mineflayer-armor-manager |
-| mineflayer-collectblock |
-| mineflayer-tool |
-| mineflayer-tps|
-| opn |
-| readline |
-| readline-sync |
- 
