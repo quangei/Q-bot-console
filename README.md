@@ -31,6 +31,12 @@ This program use mineflayer and mineflayer-plugins
 | readline-sync | [readline-sync](https://www.npmjs.com/package/readline-sync) |
 
 # Update
+- Fix line input
+- Fix '.equip'
+- Fix '.eat'
+- Update '.unequip'
+- Update '.inventory'
+- Add '.stopeat'
 
 # Command list:
 ## Gui command:
