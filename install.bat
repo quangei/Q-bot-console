@@ -24,14 +24,7 @@ goto stop
 :install
 echo Installing Modules...
 echo Pls waiting install modules, it can be long
-call npm install mineflayer
-call npm install mineflayer-pathfinder
-call npm install mineflayer-web-inventory
-call npm install mineflayer-pvp
-call npm install mineflayer-armor-manager
-call npm install opn
-call npm install readline
-call npm install readline-sync
+call npm install
 
 if not "%ERRORLEVEL%" == "0" goto errInstall
 
