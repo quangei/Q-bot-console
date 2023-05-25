@@ -46,7 +46,6 @@ const options = {
   auth: bauth,
   password: bpass
 }
-
 createbot()
 
 clientlog(`Dùng \x1b[38;2;38;88;252m.help\x1b[0m để hiển thị toàn bộ command`)
@@ -59,7 +58,7 @@ function createbot() {
   bot.on('login', () => {
     clientlog(`\x1b[38;2;252;246;50m${options.username} login in ${options.host}:${options.port}\x1b[0m`)
     process.title = `${options.username} @ ${options.host}:${options.port}`
-    logmes('all')
+    bot.on('message', (message) => clientlog(message.toAnsi()));
   })
 
   bot.on('spawn', () => {
@@ -112,7 +111,7 @@ function createbot() {
                 description: "Gửi lệnh đến máy chủ mà không cần /"
               },
               {
-                usage: ".spam <text> <delay> <time> <antispamtype:length> (antispamtype:all | number | letter | capitalize | lowercase)",
+                usage: `.spam "<text>" <delay> <time> <antispamtype:length:customechars(optional)`,
                 description: "Spam gì đó vào đến máy chủ"
               }  
             ];
@@ -268,15 +267,15 @@ function createbot() {
                 description: "Đổi tên cho bot."
               },
               {
-                usage: ".connect <ip:port> <version>",
+                usage: ".conn | .connect <ip:port> <version>",
                 description: "Cho bot vào server."
               },
               {
-                usage: ".disconnect",
+                usage: ".disco | .disconnect",
                 description: "Cho bot rời server."
               },
               {
-                usage: ".reconnect",
+                usage: ".reco | .reconnect",
                 description: "Cho bot vào lại server."
               },
               {
@@ -347,73 +346,82 @@ function createbot() {
             break;
 
           case '.spam':
-            if (arg.length < 4) {
-              clientlog(`Usage: .spam <text> <delay> <time> <antispamtype:length> (antispamtype:all | number | letter | capitalize | lowercase)`)
+            let args = command.split(/ (?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            if (args.length < 3) {
+              clientlog(`Usage: .spam "<text>" <delay> <time> <antispamtype:length:customechars(optional)`)
+              clientlog(`Anti spam type:all | number | letter | capitalize | lowercase | custom`)
               return
             }
-            function randomChar(charType) {
-              var chars = "";
-              if (charType === "all") {
-                chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
-              } else if (charType === "number") {
-                chars = "0123456789";
-              } else if (charType === "letter") {
-                chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-              } else if (charType === "capitalize") {
-                chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-              } else if (charType === "lowercase") {
-                chars = "abcdefghijklmnopqrstuvwxyz";
-              }
-              var index = Math.floor(Math.random() * chars.length);
-              return chars[index];
+            let text = command.match(/"([^"]+)"/)[1];
+            let delay = parseInt(args[2]) * 1000
+            let time = parseInt(args[3]) * 1000
+            let antispam = args[4]
+            let prefix = (args[5] ?? '').split(':')
+            let randomChar = (chars) => chars[Math.floor(Math.random() * chars.length)]
+            let aspam, length, chars, left, right
+            if (antispam) {
+              aspam = antispam.split(':')
+              length = parseInt(aspam[1])
+              switch (aspam[0]) {
+                case 'all':
+                  chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+                  break
+                case 'number':
+                  chars = "0123456789";
+                  break
+                case 'letter':
+                  chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                  break
+                case 'capitalize':
+                  chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                  break
+                case 'lowercase':
+                  chars = "abcdefghijklmnopqrstuvwxyz";
+                  break
+                case 'custom':
+                  chars = aspam[2]
+                  break
+                default:
+                  chars = "";
             }
-            function randomString(length, charType) {
-              var result = "";
-              for (var i = 0; i < length; i++) {
-                result += randomChar(charType);
+              left = prefix[0] || '';
+              right = prefix[1] || '';            
+            } else {
+              length = 0
+              left = ""
+              right = ""
+            }
+            function randomString(length, chars) {
+              let result = "";
+              for (let i = 0; i < length; i++) {
+                result += randomChar(chars);
               }
               return result
             }
-            let text = arg[1];
-            let delay = parseInt(arg[2]) * 1000;
-            let time = parseInt(arg[3]) * 1000;
-            let antispam = arg[4]
-            let aspam = antispam.split(':')
-            if (aspam[0] == 'all') {
-              spam('all')
-            } else if (aspam[0] == 'number') {
-              spam('number')
-            } else if (aspam[0] == 'letter') {
-              spam('letter')
-            } else if (aspam[0] == 'capitalize') {
-              spam('capitalize')
-            } else if (aspam[0] == 'lowercase') {
-              spam('lowercase')
-            } else {
-              spam('all')
-            } 
-
-            function spam(antitype) {
-              clientlog(`Bắt đầu spam tin nhắn "${text}" cách ${delay}ms`);
-              let intervalId = setInterval(() => {
-                let spam = `${text} >${randomString(aspam[1], antitype)}<`
+        
+            function spam() {
+              clientlog(`Bắt đầu spam "${text}" cách ${delay / 1000}s trong ${time/ 1000}s với antispam ${left} ${antispam} ${right}`);
+              intervalId = setInterval(() => {
+                let spam = `${text} ${left} ${randomString(length, chars)} ${right}`
                 bot.chat(spam)
               }, delay);
-
               setTimeout(() => {
-                  clientlog('Kết thúc spam tin nhắn');
-                  clearInterval(intervalId);
+                clientlog('Kết thúc spam tin nhắn');
+                clearInterval(intervalId);
               }, time + 1000);
             }
-            break;
-          
-          case '.login':
-            bname = arg[1];
-            options.username = bname;
-            clientlog(`Bot name set to ${arg[1]}`)
+            spam();
             break;
 
-            
+          case '.stopspam':
+            if (intervalId) {
+              clearInterval(intervalId);
+              clientlog('Spamming stopped');
+            } else {
+              clientlog('No spamming in progress');
+            }
+            break;
+                        
           case '.fly':
             if (bot.player.gamemode != 1) {clientlog(`You need in creative to use`); return}
             bot.creative.startFlying()
@@ -861,25 +869,48 @@ function createbot() {
             break;
           
           case '.meslog':
-            if (!arg[1]) clientlog(`Usage '.meslog + off / mes / chat / all'`)
-            const logs = arg[1]
-            if (logs === 'all') {
-              logmes('all')
-            } else if (logs === 'mes') {
-              logmes('mes')
-            } else if (logs === 'chat') {
-              logmes('chat')
-            } else if (logs === 'off') {
-              logmes('off')
-            } else {
-              clientlog(`Unknown logs: ${logs}`)
+            if (!arg[1]) {
+              clientlog(`Usage '.meslog + off / mes / chat / all'`);
+              break;
+            }
+            const logs = arg[1];
+            bot.removeAllListeners('message');
+            bot.removeAllListeners('chat');
+            switch (logs) {
+              case 'all':
+                clientlog('Show all');
+                bot.on('message', (message) => {
+                  clientlog(message.toAnsi());
+                });
+                break;
+              case 'mes':
+                clientlog('Show message');
+                bot.on('message', (message, position) => {
+                  if (position !== 'game_info') {
+                    clientlog(message.toAnsi());
+                  }
+                });
+                break;
+              case 'chat':
+                clientlog('Show chat');
+                bot.on('chat', (username, message) => {
+                  clientlog(`<${username}> ${message}`);
+                });
+                break;
+              case 'off':
+                clientlog('Message logged off');
+                break;
+              default:
+                clientlog(`Unknown logs: ${logs}`);
             }
             break;
+            
 
           case '.mine':
             mineblock()
             break;
-
+          
+          case ".conn":
           case '.connect':
             bhost = arg[1];
             let ip = bhost.split(':');
@@ -890,11 +921,13 @@ function createbot() {
             createbot()
             break;
 
+          case '.disco':
           case '.disconnect':
             bot.quit()
             clientlog(`${options.username} left ${options.host}:${options.port}`)
             break;
-
+          
+          case '.reco':
           case '.reconnect':
             createbot()
             break;
@@ -1007,37 +1040,6 @@ function createbot() {
       clientlog(`Stopped fight player`);
     }
   })
-
-  function logmes (mode) {
-    const logmode = mode
-    if (logmode === 'all') {
-      clientlog('Show all')
-      bot.removeAllListeners('message')
-      bot.removeAllListeners('chat')
-      bot.on('message', (message) =>{
-        clientlog(message.toAnsi())
-      })
-    } else if (logmode === 'mes') {
-      clientlog('Show message')
-      bot.removeAllListeners('message')
-      bot.removeAllListeners('chat')
-      bot.on('message', (message, position) => {
-        if (position === 'game_info') return
-        clientlog(message.toAnsi())
-    })
-    } else if (logmode === 'chat') {
-      clientlog('Show chat')
-      bot.removeAllListeners('message')
-      bot.removeAllListeners('chat')
-      bot.on('chat', (username, message) => {
-        clientlog(`<${username}> ${message}`)
-      })
-    } else if (logmode === 'off') {
-      clientlog('Message logged off')
-      bot.removeAllListeners('message')
-      bot.removeAllListeners('chat')
-    }
-  }
   
   bot.on('kicked', console.log)
   bot.on('error', console.log)
