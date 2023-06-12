@@ -7,10 +7,10 @@ This program use mineflayer and mineflayer-plugins
 - Install node.js https://nodejs.org/en
 - Install gitbash https://git-scm.com/downloads (to use git clone)
 - Open cmd and goto file you want to save my bot with `cd`
-- Use `git clone https://github.com/quangei/Q-bot-console.git`
-- Use `cd q-bot-console`
-- Use `npm install`
-- Use `node bot.js`
+- Write `git clone https://github.com/quangei/Q-bot-console.git`
+- Write `cd q-bot-console`
+- Write `npm install`
+- Write `node bot.js`
 - Or you can download .exe
 
 # Node packages
