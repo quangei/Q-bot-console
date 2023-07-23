@@ -1,3 +1,4 @@
+# https://github.com/quangei/Q-bot-console-nextgen
 # Q-bot-console
 Minecraft bot with chat and some command
 
